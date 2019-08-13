@@ -29,6 +29,6 @@ int main()
             ans-=i-a[i];
         }
     }
+    
     printf("%d\n",ans);
-    return 0;
 }

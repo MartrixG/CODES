@@ -76,5 +76,4 @@ int main()
         printf("%lld ",dis[i]);
     }
     printf("\n");
-    return 0;
 }

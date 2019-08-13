@@ -37,5 +37,4 @@ int main()
         ans+=a[i].count();
     }
     printf("%d\n", ans);
-    return 0;
 }

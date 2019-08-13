@@ -34,7 +34,6 @@ void manacher() {
         r[i] = x;
     }
 }
-//   ababdbabacd
 int main()
 {
     string s;
@@ -42,8 +41,8 @@ int main()
     s2+="%#";
     for(int i=0;i<s.size();i++)
     {
-        s2+=s[i];
-        s2+='#';
+    s2+=s[i];
+    s2+='#';
     }
     manacher();
     int n=1;
@@ -65,5 +64,4 @@ int main()
             ans=max(ans,ll[i]+rr[i]);
     }
     printf("%d\n",ans);
-    return 0;
 }

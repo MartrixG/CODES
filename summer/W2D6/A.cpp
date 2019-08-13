@@ -70,5 +70,4 @@ int main()
     if (ans == 0)
         ans = -1;
     printf("%d\n", ans);
-    return 0;
 }

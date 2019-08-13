@@ -39,5 +39,4 @@ int main()
     {
         printf("%d\n", num[i]);
     }
-    return 0;
 }
