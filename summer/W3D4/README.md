@@ -1,8 +1,8 @@
 # 巨难的图论
 
-比赛：https://vjudge.net/contest/320003 密码：gugugu
+比赛：<https://vjudge.net/contest/320003> 密码：gugugu
 
-补题：https://vjudge.net/contest/320005
+补题：<https://vjudge.net/contest/320005>
 
 ## 强连通分量
 
