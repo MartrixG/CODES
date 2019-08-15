@@ -16,6 +16,8 @@ tarjan算法：<https://blog.csdn.net/hurmishine/article/details/75248876>
 
 边双联通分量：没有桥的联通分量
 
-割点：判断顶点U是否为割点，用u顶点的dnf值和它的所有的孩子顶点的low值进行比较，如果存在至少一个孩子顶点V满足low[v] >= dnf[u]，那么u是割点。
+<https://www.cnblogs.com/nullzx/p/7968110.htmls>
 
-桥：对于任意一条边（u, v）low[v] > dnf[u] 就说明u-v是桥。
+割点：判断顶点U是否为割点，用u顶点的dnf值和它的所有的孩子顶点的low值进行比较，如果存在至少一个孩子顶点V满足low[v] >= dfn[u]，那么u是割点。
+
+桥：对于任意一条边（u, v）low[v] > dfn[u] 就说明u-v是桥。
