@@ -103,8 +103,8 @@ void modify(node *root, int l, int r, int k)
     if (root->l >= l && root->r <= r)
     {
         root->sum += k * (root->r - root->l + 1);
-        root->max += root->f;
-        root->min += root->f;
+        root->max += k;
+        root->min += k;
         root->f += k;
         return;
     }
