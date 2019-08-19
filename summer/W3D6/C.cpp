@@ -104,7 +104,7 @@ int main()
             change1(totrank[g[i]], 1), change1(totrank[f[i]], 1);
             change2(grank[g[i]], 1);
             ans += sum1(totrank[g[i]] - 1) - sum2(grank[g[i]] - 1);
-            if (f[i] <= g[i])
+            if (f[i] < g[i])
                 ans--;
         }
         printf("%lld\n", ans);

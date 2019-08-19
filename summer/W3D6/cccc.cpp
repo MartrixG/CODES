@@ -7,7 +7,7 @@ typedef long long ll;
 
 int n, t;
 ll k;
-ll a[N], tree[N], f[N], g[N], ff[N], gg[N], h[N<<1], hh[N<<1];
+ll a[N], tree[N], f[N], g[N], forder[N], gorder[N], h[N<<1], totorder[N<<1];
 
 inline ll qsm(ll a, ll b) {
     ll ans = 1;
@@ -49,26 +49,26 @@ int main() {
             ll a;
             scanf("%lld", &a);
             f[i] = qsm(i, a);
-            ff[i] = f[i];
+            forder[i] = f[i];
             g[i] = qsm(a, i);
-            gg[i] = g[i];
+            gorder[i] = g[i];
             h[i+i-1] = g[i];
-            hh[i+i-1] = h[i+i-1];
+            totorder[i+i-1] = h[i+i-1];
             h[i+i] = f[i];
-            hh[i+i] = h[i+i];
+            totorder[i+i] = h[i+i];
         }
         memset(tree, 0, sizeof(tree));
-        sort(ff+1, ff+n+1);
-        sort(gg+1, gg+n+1);
-        sort(hh+1, hh+n+n+1);
-        int sz1 = unique(ff+1, ff+n+1)-ff-1;
-        int sz2 = unique(gg+1, gg+n+1)-gg-1;
-        int sz3 = unique(hh+1, hh+n+n+1)-hh-1;
+        sort(forder+1, forder+n+1);
+        sort(gorder+1, gorder+n+1);
+        sort(totorder+1, totorder+n+n+1);
+        int tot1 = unique(forder+1, forder+n+1)-forder-1;
+        int tot2 = unique(gorder+1, gorder+n+1)-gorder-1;
+        int tot3 = unique(totorder+1, totorder+n+n+1)-totorder-1;
         for(int i = 1; i <= n; i++) {
-            f[i] = lower_bound(ff+1, ff+1+sz1, f[i])-ff;
-            g[i] = lower_bound(gg+1, gg+1+sz2, g[i])-gg;
-            h[i+i-1] = lower_bound(hh+1, hh+1+sz3, h[i-1+i])-hh;
-            h[i+i] = lower_bound(hh+1, hh+1+sz3, h[i+i])-hh;
+            f[i] = lower_bound(forder+1, forder+1+tot1, f[i])-forder;
+            g[i] = lower_bound(gorder+1, gorder+1+tot2, g[i])-gorder;
+            h[i+i-1] = lower_bound(totorder+1, totorder+1+tot3, h[i-1+i])-totorder;
+            h[i+i] = lower_bound(totorder+1, totorder+1+tot3, h[i+i])-totorder;
         }
         ll ans1= 0, ans2 = 0, ans = 0;
         for(int i = 1; i <= n; i++) {
