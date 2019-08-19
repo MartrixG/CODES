@@ -7,7 +7,7 @@ const int N = 1500;
 int n, m;
 int s1, t1, s2, t2;
 vector<int> to[N + 10], cost[N + 10];
-int ds1
+int ds1;
 int main()
 {
     scanf("%d%d", &n, &m);

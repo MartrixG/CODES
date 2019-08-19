@@ -4,6 +4,8 @@
 
 hitaaahit
 
+改题：hitbbbhit
+
 区间dp：
 
 合并石子、选点（枚举断点）
