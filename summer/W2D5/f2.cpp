@@ -3,7 +3,6 @@
 #include <string>
 #include <iostream>
 using namespace std;
-const int inf = 0x7fffffff;
 struct node
 {
     int max;
@@ -11,7 +10,6 @@ struct node
     node *lc;
     node *rc;
 };
-int a[100000];
 int max(int a, int b) { return a > b ? a : b; }
 
 void build(node *root, int l, int r)
@@ -22,7 +20,7 @@ void build(node *root, int l, int r)
     {
         root->lc = NULL;
         root->rc = NULL;
-        root->max = a[l];
+        scanf("%d",&root->max);
     }
     else
     {
@@ -67,6 +65,8 @@ void clear(node *root)
         clear(root->lc);
     if (root->rc != NULL)
         clear(root->rc);
+    root->lc=NULL;
+    root->rc=NULL;
     delete (root);
 }
 int n, m;
@@ -74,12 +74,8 @@ int main()
 {
     while (scanf("%d%d", &n, &m) != EOF)
     {
-        node ROOT;
-        for (int i = 1; i <= n; i++)
-        {
-            scanf("%d", &a[i]);
-        }
-        build(&ROOT, 1, n);
+        node* ROOT=new node;
+        build(ROOT, 1, n);
         for (int i = 1; i <= m; i++)
         {
             char op;
@@ -88,13 +84,13 @@ int main()
             if (op == 'Q')
             {
 
-                printf("%d\n", query_max(&ROOT, x, y));
+                printf("%d\n", query_max(ROOT, x, y));
             }
             else
             {
-                modify(&ROOT, x, x, y);
+                modify(ROOT, x, x, y);
             }
         }
-        clear(&ROOT);
+        clear(ROOT);
     }
 }
