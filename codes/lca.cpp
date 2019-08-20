@@ -15,7 +15,7 @@ void add(int x, int y)
     e[++tot].to = y, e[tot].next = h[x], h[x] = tot;
 }
 
-int bit[31], Log[N];
+int bit[31];
 int deep[N], f[N][31];
 void dfs(int x, int fa)
 {
@@ -60,11 +60,6 @@ int lca(int x, int y)
 int d[N];
 int main()
 {
-    Log[0] = -1;
-    for (int i = 1; i <= n; i++)
-    {
-        Log[i] = Log[i / 2] + 1;
-    }
     bit[0] = 1;
     for (int i = 1; i <= 20; i++)
     {
