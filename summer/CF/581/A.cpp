@@ -24,7 +24,5 @@ int main()
     }
     if (s[0] == '0' && l == 1)
         ans = 0;
-    if (s[0] == '1' && l == 1)
-        ans = 0;
     printf("%d\n", ans);
 }
