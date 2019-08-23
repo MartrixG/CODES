@@ -4,7 +4,7 @@
 #include <algorithm>
 using namespace std;
 //p1p2和p1p3的叉积
-#define cross(p1,p2,p3) ((p2.x-p1.x)*(p3.y-p1.y)-(p3.x-p1.x)*(p2.y-p1.y))
+#define cross(p1, p2, p3) ((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y))
 
 const double eps = 1e-9;
 inline int sign(double a) { return a < -eps ? -1 : a > eps; }
@@ -22,9 +22,21 @@ struct P
     P operator-(P p) { return {x - p.x, y - p.y}; }
     P operator*(double d) { return {x * d, y * d}; }
     P operator/(double d) { return {x / d, y / d}; }
-    double alpha(){return atan2(y,x);}
-    void read(){cin>>x>>y;}
+    double alpha() { return atan2(y, x); }
+    void read() { cin >> x >> y; }
 };
+//直线平行
+bool checkll(P p1, P p2, P q1, P q2)
+{
+    double a1 = cross(q1, q2, p1), a2 = -cross(q1, q2, p2);
+    return sign(a1 + a2) != 0;
+}
+//直线交点
+P isll(P p1, P p2, P q1, P q2)
+{
+    double a1 = cross(q1, q2, p1), a2 = -cross(q1, q2, p2);
+    return (p1 * a2 + p2 * a1) / (a1 + a2);
+}
 
 int main()
 {
