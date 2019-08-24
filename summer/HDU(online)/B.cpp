@@ -48,7 +48,6 @@ int main()
                 }
                 l = r;
                 last = *s.lower_bound(k);
-                if(s.lower_bound(k)==)
                 printf("%d\n", last);
             }
         }
