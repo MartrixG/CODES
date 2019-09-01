@@ -7,17 +7,6 @@ const int N = 100000;
 int degree[N];
 vector<int> to[N];
 int n;
-/*
-7 8
-1 2
-2 3
-2 4
-3 5
-4 6
-6 5
-5 7
-6 7
-*/
 void dag()
 {
     queue<int> q;

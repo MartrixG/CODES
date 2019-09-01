@@ -8,7 +8,7 @@ struct node
     node *lc;
     node *rc;
 };
-node ROOT;
+node* ROOT;
 int a[100000];
 int max(int a, int b) { return a > b ? a : b; }
 int min(int a, int b) { return a < b ? a : b; }
@@ -21,7 +21,7 @@ void push_down(node *root)
     {
         lc->f += f;
         rc->f += f;
-        lc->sum += f * (lc->r - lc->r + 1);
+        lc->sum += f * (lc->r - lc->l + 1);
         rc->sum += f * (rc->r - rc->l + 1);
         lc->max += f;
         lc->min += f;
@@ -108,23 +108,22 @@ void modify(node *root, int l, int r, int k)
         root->f += k;
         return;
     }
-    if (root->l == root->r)
-        return;
     push_down(root);
     modify(root->lc, l, r, k);
     modify(root->rc, l, r, k);
     push_up(root);
 }
+
+void clear(node *root)
+{
+    if (root->lc != NULL)
+        clear(root->lc);
+    if (root->rc != NULL)
+        clear(root->rc);
+    root->lc=NULL;
+    root->rc=NULL;
+    delete (root);
+}
 int main()
 {
-    for (int i = 1; i <= 10; i++)
-        a[i] = i;
-    build(&ROOT, 1, 10);
-    printf("%d\n", query_sum(&ROOT, 2, 6));
-    printf("%d\n", query_max(&ROOT, 1, 3));
-    printf("%d\n", query_min(&ROOT, 5, 7));
-    modify(&ROOT, 2, 6, 2);
-    printf("%d\n", query_sum(&ROOT, 2, 6));
-    printf("%d\n", query_max(&ROOT, 1, 3));
-    printf("%d\n", query_min(&ROOT, 5, 7));
 }

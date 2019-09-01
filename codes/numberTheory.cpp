@@ -1,7 +1,8 @@
 #include <cstdio>
 #include <iostream>
 using namespace std;
-int m[1000],a[1000];
+typedef long long ll;
+int m[1000], a[1000];
 void exgcd(int a, int b, int &x, int &y)
 {
     if (b == 0)
@@ -30,7 +31,57 @@ int chinashengyu()
     }
     return (ans + lcm) % lcm;
 }
+ll gcd(ll a, ll b)
+{
+    return b == 0 ? a : gcd(b, a % b);
+}
+ll quickpow(ll a, ll b)
+{
+    ll ans = 1;
+    while (b)
+    {
+        if (b & 1)
+            ans *= a;
+        else
+            a *= a;
+    }
+    return ans;
+}
+int phi[1000000];
+int isprime[1000000];
+int prime[100000];
+int tot;
+void oulaishai(int n)
+{
+    memset(isprime, 0, sizeof(isprime));
+    for (int i = 2; i <= n; i++)
+    {
+        if (!isprime[i])
+        {
+            prime[++tot] = i;
+            phi[i] = i - 1;
+        }
+        for (int j = 1; j <= tot; j++)
+        {
+            if (i * prime[j] > n)
+                break;
+            isprime[i * prime[j]] = 1;
+            if (i % prime[j])
+            {
+                phi[i * prime[j]] = phi[i] * (prime[j] - 1);
+            }
+            else
+            {
+                phi[i * prime[j]] = phi[i] * prime[j];
+                break;
+            }
+        }
+    }
+}
 int main()
 {
-    return 0;
+    int x, y;
+    exgcd(252, 198, x, y);
+    printf("%d %d", x, y);
 }
+//4 -5
