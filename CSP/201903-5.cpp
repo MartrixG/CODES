@@ -1,11 +1,15 @@
 #include <cstdio>
 #include <iostream>
 #include <queue>
-#define ll long long
+#include <vector>
 using namespace std;
-int n, m;
-vector<int> to[200010];
-vector<ll> cost[200010];
+typedef long long ll;
+const int N = 1e4 + 10;
+const ll inf = 0x7fffffffffffffff;
+vector<int> to[N];
+vector<ll> cost[N];
+int n, m, k;
+ll dis[N];
 struct node
 {
     int u;
@@ -15,15 +19,13 @@ struct node
         return this->dis > o.dis;
     }
 };
-struct edge
+priority_queue<ll, vector<ll>, greater<ll> > d[N];
+void dij(int s)
 {
-    int to, next;
-    ll c;
-};
-ll dis[200010];
-int vis[200010];
-void dijk(int s)
-{
+    for (int i = 1; i <= n; i++)
+    {
+        dis[i] = inf;
+    }
     dis[s] = 0;
     priority_queue<node> Q;
     node first;
@@ -35,9 +37,9 @@ void dijk(int s)
         int now = Q.top().u;
         ll c = Q.top().dis;
         Q.pop();
-        if (vis[now])
+        if (c != dis[now])
             continue;
-        vis[now] = 1;
+        d[now].push(c);
         for (int i = 0; i < to[now].size(); i++)
         {
             if (dis[to[now][i]] > c + cost[now][i])
@@ -51,35 +53,54 @@ void dijk(int s)
         }
     }
 }
+int ji[N];
+ll ans[N];
 int main()
 {
-    scanf("%d%d", &n, &m);
+    scanf("%d%d%d", &n, &m, &k);
     for (int i = 1; i <= n; i++)
     {
-        dis[i] = 0x7fffffffffffffff;
+        scanf("%d", &ji[i]);
     }
     for (int i = 1; i <= m; i++)
     {
         int x, y;
         ll z;
         scanf("%d%d%lld", &x, &y, &z);
+        if (x == y)
+            continue;
         to[x].push_back(y), to[y].push_back(x);
-        cost[x].push_back(z + z), cost[y].push_back(z + z);
+        cost[x].push_back(z), cost[y].push_back(z);
     }
     for (int i = 1; i <= n; i++)
     {
-        ll x;
-        int now = i;
-        scanf("%lld", &x);
-        to[0].push_back(now);
-        to[now].push_back(0);
-        cost[0].push_back(x);
-        cost[now].push_back(x);
+        if (ji[i] == 1)
+        {
+            dij(i);
+        }
     }
-    dijk(0);
     for (int i = 1; i <= n; i++)
     {
-        printf("%lld ", dis[i]);
+        int cnt = k;
+        while (cnt-- && !d[i].empty())
+        {
+            ans[i] += d[i].top();
+            d[i].pop();
+        }
     }
-    printf("\n");
+    for (int i = 1; i <= n; i++)
+    {
+        printf("%lld\n", ans[i]);
+    }
 }
+/*
+7 6 4
+1 0 1 0 1 1 0
+1 4 1
+1 2 3
+2 4 4
+2 3 5
+2 5 7
+6 7 5
+
+*/
