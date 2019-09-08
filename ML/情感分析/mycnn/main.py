@@ -24,8 +24,35 @@ num_of_senteces = len(train_data)
 
 print("Net loaded.")
 
+def test():
+    num = len(test_data)
+    right = 0
+    tmp = 0
+    for i in range(num):
+        if tmp == 0:
+            y = []
+            x = []
+        tmp = tmp+1
+        x.append(test_data[i][0])
+        y.append(test_data[i][1])
+        if tmp == 8:
+            input = torch.LongTensor(x)
+            input = input.cuda()
+            y = torch.LongTensor(y)
+            y = y.cuda()
 
-for k in range(10):
+            output = net.forward(input)
+            for j in range(8):
+                flag = 1
+                if output[j][0] > output[j][1]:
+                    flag = 0
+                if(flag == y[j]):
+                    right += 1
+            tmp = 0
+    print(right, num)
+
+
+for k in range(15):
     tmp = 0
     t = tqdm(range(num_of_senteces), ncols=100, desc="training")
     for i in t:
@@ -53,28 +80,4 @@ for k in range(10):
                 t.set_postfix(loss=format(print_loss, '.8f'))
             tmp = 0
 
-num_of_senteces = len(test_data)
-right = 0
-tmp = 0
-for i in range(num_of_senteces):
-    if tmp == 0:
-        y = []
-        x = []
-    tmp = tmp+1
-    x.append(train_data[i][0])
-    y.append(train_data[i][1])
-    if tmp == 8:
-        input = torch.LongTensor(x)
-        input = input.cuda()
-        y = torch.LongTensor(y)
-        y = y.cuda()
-
-        output = net.forward(input)
-        for j in range(8):
-            flag = 1
-            if output[j][0] > output[j][1]:
-                flag = 0
-            if(flag == y[j]):
-                right += 1
-        tmp = 0
-print(right, num_of_senteces)
+test()
