@@ -1,8 +1,8 @@
 
 *.json
 *.exe
+*.pyc
 /ML/情感分析/data/*
 /ML/情感分析/Emotional Classification/*
 /ML/论文/*
 /ML/情感分析/sa_demo/*
-/ML/情感分析/mycnn/__pycache__
