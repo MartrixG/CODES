@@ -11,19 +11,23 @@ plt.show()
 def view(w, x_rate, y_rate):
     print_x = np.vander(np.linspace(0, 1, 100), order + 1, True)
     print_y = np.dot(print_x, w) * y_rate
+
+    sinx = np.linspace(0, 1, 100)
+    sinx = np.sin(2 * np.pi * sinx)
     plt.cla()
     plt.plot(np.linspace(0, 1, 100), print_y.T.A[0], c="r")
-    plt.scatter(source_x, source_y, s=20)
+    plt.plot(np.linspace(0, 1, 100), sinx, c="g")
+    plt.scatter(source_x, source_y, s=10, c="b")
     plt.pause(0.1)
 
 
 args = dict(
     epoch=2000000,
-    num_x=100,
-    sigma=0.1,
+    num_x=200,
+    sigma=0.3,
     num_group=7,
-    order=4,
-    lamda=0.001,
+    order=7,
+    lamda=0.00001,
     optim="CG",
     LR=0.1
 )
