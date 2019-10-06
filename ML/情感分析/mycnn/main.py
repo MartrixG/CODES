@@ -1,3 +1,5 @@
+#Python 3.6.8 64-bit (pythorch-gpu)
+
 import numpy as np
 import preview as pre
 import torch.nn as nn

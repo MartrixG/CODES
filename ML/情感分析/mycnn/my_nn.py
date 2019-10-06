@@ -1,3 +1,5 @@
+#Python 3.6.8 64-bit (pythorch-gpu)
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

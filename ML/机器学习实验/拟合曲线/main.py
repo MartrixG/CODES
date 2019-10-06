@@ -1,3 +1,5 @@
+#Python 3.7.1 64-bit
+
 import makedata as data
 import model as nn
 import matplotlib.pyplot as plt

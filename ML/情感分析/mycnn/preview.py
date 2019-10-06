@@ -1,3 +1,5 @@
+#Python 3.6.8 64-bit (pythorch-gpu)
+
 import collections
 import numpy as np
 from tqdm import tqdm
