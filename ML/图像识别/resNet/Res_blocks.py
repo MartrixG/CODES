@@ -1,7 +1,6 @@
 #Python 3.6.9 64-bit(tensorflow-gpu)from keras import layers
 
-from keras.layers import Input, Add, Dense, Conv2D, Activation, ZeroPadding2D, BatchNormalization,\
-    Flatten, AveragePooling2D,MaxPooling2D, GlobalAveragePooling2D
+from keras.layers import Input, Add, Dense, Conv2D, Activation, BatchNormalization
 from keras.initializers import glorot_uniform
 from keras.regularizers import l2
 
