@@ -30,7 +30,7 @@ args = dict(
     num_group=1,
     order=15,
     lamda=0.00001,
-    optim="MSElamda",
+    optim="CG",
     LR=0.1
 )
 epoch = args["epoch"]#训练轮数

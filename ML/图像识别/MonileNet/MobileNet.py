@@ -3,7 +3,7 @@
 import Data_process
 from keras.layers import BatchNormalization, Input, SeparableConv2D, Flatten, Dense, AveragePooling2D
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, ReduceLROnPlateau
-from keras.models import Model
+from keras.models import Model, load_model
 import keras.backend as K
 
 K.set_image_data_format('channels_first')
@@ -40,10 +40,16 @@ def MobileNet(input_shape = (3, 32, 32), classes = 10):
     X = mobile(X, f = 16)
     X = mobile(X, f = 16)
     X = mobile(X, f = 16)
+    X = mobile(X, f = 16)
+    X = mobile(X, f = 16)
     X = mobile(X, f = 32, stride = 2)
     X = mobile(X, f = 32)
     X = mobile(X, f = 32)
+    X = mobile(X, f = 32)
+    X = mobile(X, f = 32)
     X = mobile(X, f = 64, stride = 2)
+    X = mobile(X, f = 64)
+    X = mobile(X, f = 64)
     X = mobile(X, f = 64)
     X = mobile(X, f = 64)
     X = AveragePooling2D(pool_size = 2)(X)
@@ -70,7 +76,7 @@ lr_scheduler = LearningRateScheduler(lr_sch)
 lr_reducer = ReduceLROnPlateau(monitor = 'val_acc', factor = 0.2, patience = 5, mode = 'max', min_lr = 1e-3)
 callbacks = [checkpoint, lr_scheduler, lr_reducer]
 
-model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size)
+#model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size)
 #model.fit(x_train, y_train, epochs = epochs, batch_size = batch_size, validation_data = (x_test,y_test), verbose = 1,callbacks = callbacks)
 #model.summary()
 preds = model.evaluate(x_test, y_test)

@@ -67,3 +67,5 @@ def view_pic(num_pic, num_ba):
     print(meta['label_names'][labels[num_pic]])
     plt.imshow(pic)
     plt.show()
+
+view_pic(10, 1)
