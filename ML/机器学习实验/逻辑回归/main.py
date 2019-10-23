@@ -5,12 +5,12 @@ import makedata
 import model as nn
 
 args = dict(
-    epoch = 300,
-    num_x = 200,
+    epoch = 100,
+    num_x = 100,
     sigma = 0.15,
     lamda = 0.,
     LR    = 0.01,
-    data  = 'satisfy' # cat, dissatisfy, satisfy
+    data  = 'dissatisfy' # cat, dissatisfy, satisfy
 )
 
 num_x = args['num_x']

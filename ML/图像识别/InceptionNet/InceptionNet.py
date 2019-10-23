@@ -111,8 +111,8 @@ lr_scheduler = LearningRateScheduler(lr_sch)
 lr_reducer = ReduceLROnPlateau(monitor = 'val_acc', factor = 0.2, patience = 5, mode = 'max', min_lr = 1e-3)
 callbacks = [checkpoint, lr_scheduler, lr_reducer]
 
-#model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size)
-model.fit(x_train, y_train, epochs = epochs, batch_size = batch_size, validation_data = (x_test,y_test), verbose = 1,callbacks = callbacks)
+model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size)
+#model.fit(x_train, y_train, epochs = epochs, batch_size = batch_size, validation_data = (x_test,y_test), verbose = 1,callbacks = callbacks)
 #model.summary()
 preds = model.evaluate(x_test, y_test)
 print ("Loss = " + str(preds[0]))
