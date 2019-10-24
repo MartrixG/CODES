@@ -83,5 +83,3 @@ model.fit(x_train, y_train, epochs = epochs, batch_size = batch_size, validation
 preds = model.evaluate(x_test, y_test)
 print ("Loss = " + str(preds[0]))
 print ("Test Accuracy = " + str(preds[1]))
-
-os.system('echo hello world')

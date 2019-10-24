@@ -4,7 +4,10 @@ import numpy as np
 class network(object):
     def __init__(self, args):#初始化
         self.n = args["num_x"]
-        self.m = 3
+        if(args['data'] == 'iris'):
+            self.m = 5
+        else:
+            self.m = 3
         self.w = np.mat(np.random.rand(self.m, 1))#系数矩阵初始化为随机
 
     def paramaters(self):
