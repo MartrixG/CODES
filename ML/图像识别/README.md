@@ -3,7 +3,7 @@ ResNet
 |layer_name |output_size |18-layer|34-layer|38-layer|
 |:-:        |:-:         |:-:     |:-:|:-:|
 |conv1|112 x 112|7 x 7, 64, stride 2|7 x 7, 64, stride 2|3 x 3,16,stride 1
-|conv2| 56 x 56|$$\left[\begin{matrix} 3 * 3, & 64 \\ 3 * 3,&64\end{matrix}\right]*2 $$ | $$ \left[\begin{matrix} 3 * 3, & 64 \\ 3 * 3,&64\end{matrix}\right] * 3 $$ | $$ \left[\begin{matrix} 3 * 3, & 16 \\ 3 * 3,&16\end{matrix}\right] * 6 $$
+|conv2| 56 x 56| $ \left[\begin{matrix} 3 * 3, & 64 \\ 3 * 3,&64\end{matrix}\right]*2 $ | $$ \left[\begin{matrix} 3 * 3, & 64 \\ 3 * 3,&64\end{matrix}\right] * 3 $$ | $$ \left[\begin{matrix} 3 * 3, & 16 \\ 3 * 3,&16\end{matrix}\right] * 6 $$
 |conv3_x|28 x 28|$$\left[\begin{matrix} 3 * 3, & 128 \\ 3 * 3,&128\end{matrix}\right]*2 $$ | $$ \left[\begin{matrix} 3 * 3, & 128 \\ 3 * 3,&128\end{matrix}\right] * 4 $$ | $$ \left[\begin{matrix} 3 * 3, & 32 \\ 3 * 3,&32\end{matrix}\right] * 6 $$
 |conv4_x|14 x 14|$$\left[\begin{matrix} 3 * 3, & 256 \\ 3 * 3,&256\end{matrix}\right]*2 $$ | $$ \left[\begin{matrix} 3 * 3, & 256 \\ 3 * 3,&256\end{matrix}\right] * 6 $$ | $$ \left[\begin{matrix} 3 * 3, & 64 \\ 3 * 3,&64\end{matrix}\right] * 6 $$
 |conv5_x|7 x 7|$$\left[\begin{matrix} 3 * 3, & 512 \\ 3 * 3,&512\end{matrix}\right]*2 $$ | $$ \left[\begin{matrix} 3 * 3, & 512 \\ 3 * 3,&512\end{matrix}\right] * 3 $$
