@@ -9,7 +9,7 @@ S1_ADDR = ('127.0.0.1', 8000)
 S2_ADDR = ('127.0.0.1', 8001)
 
 DATA_LENGTH = 200
-CHUNK_SIZE = 50
+CHUNK_SIZE = 10
 WINDOW = 5
 RECV_SIZE = 1024
 TIMEOUT = 0.5
@@ -107,7 +107,8 @@ def recvfrom(conn, size, tar):
         rawdata, addr = conn.recvfrom(size)
         num, data = get_data(rawdata)
         if data == EOF:
-            with open('计算机网络\GBN\image\\recv_image.png', 'wb') as f:
+            #print(re)
+            with open('计算机网络\GBN\image\\recv_image.jpg', 'wb') as f:
                 f.write(re)
         elif data == None:
             print('Recive ACK%d'%(num))
@@ -149,7 +150,7 @@ def listen(conn, tar_addr):
             print(data.decode('utf-8'))
             send_th = Thread(target=sendto, args=(conn, data, tar_addr))
             send_th.start()
-        if arg == '1':
+        if arg == 'testfile':
             data = make_file()
             send_th = Thread(target=sendto, args=(conn, data, tar_addr))
             send_th.start()
