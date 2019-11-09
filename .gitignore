@@ -2,6 +2,8 @@
 *.json
 *.exe
 *.pyc
+*.pdf
+*.h5
 data/
 /ML/情感分析/Emotional Classification/*
 /ML/论文/*
