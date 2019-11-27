@@ -5,10 +5,10 @@
 *.pdf
 *.h5
 *.jpg
+*.txt
 data/
+cache/
 /ML/情感分析/Emotional Classification/*
 /ML/论文/*
 /ML/情感分析/sa_demo/*
 /tmp_test
-/计算机网络/HTTP/cache
-/计算机网络/HTTP/dict.txt
