@@ -4,11 +4,12 @@ import collections
 import numpy as np
 from tqdm import tqdm
 
-SENTENCE_LIMIT_SIZE = 20
+SENTENCE_LIMIT_SIZE = 100
 EMBEDDIGN_SIZE = 100
-TRAINFILE_PATH = "D:\\LEARNING\\ACM\\ML\\情感分析\\data\\train_2.txt"
-TEST_PATH = "D:\\LEARNING\\ACM\\ML\\情感分析\\data\\dev_2.txt"
-glove_PATH = "D:\\LEARNING\\ACM\\ML\\情感分析\\data\\glove.6B\\glove.6B.100d.txt"
+BASE_PATH = "D:/LEARNING/CODES/ML/情感分析/data/"
+TRAINFILE_PATH = BASE_PATH + "train_2.txt"
+TEST_PATH = BASE_PATH + "dev_2.txt"
+glove_PATH = BASE_PATH + "glove.6B/glove.6B.100d.txt"
 word_to_token = {}
 token_to_word = {}
 pos_token = []

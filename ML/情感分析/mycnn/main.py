@@ -54,7 +54,7 @@ def test():
     print(right, num)
 
 
-for k in range(15):
+for k in range(10):
     tmp = 0
     t = tqdm(range(num_of_senteces), ncols=100, desc="training")
     for i in t:
@@ -64,7 +64,7 @@ for k in range(15):
         tmp = tmp+1
         x.append(train_data[i][0])
         y.append(train_data[i][1])
-        if tmp == 8:
+        if tmp == 32:
             input = torch.LongTensor(x)
             input = input.cuda()
             y = torch.LongTensor(y)
