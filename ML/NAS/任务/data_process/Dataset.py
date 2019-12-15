@@ -4,11 +4,12 @@ You can get the enhanced data set, and the current data set that can be called i
 
 cifar10, cifar100, imagenet, coco.
 """
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"]='3'
-from matplotlib import pyplot as plt
-import numpy as np
 import random
+import numpy as np
+from matplotlib import pyplot as plt
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+
 
 def to_categorical(y, num_classes=None, dtype='float32'):
     """Converts a class vector (integers) to binary class matrix.
@@ -40,6 +41,7 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     categorical = np.reshape(categorical, output_shape)
     return categorical
 
+
 def _get_subset(num, X, Y):
     if num == None:
         return None, None
@@ -49,6 +51,7 @@ def _get_subset(num, X, Y):
     sub_x = np.array(sli[0])
     sub_y = np.array(sli[1])
     return sub_x, sub_y
+
 
 def _cifar10(path, num_dev, num_train, format):
     import CIFAR10_process as cf10
@@ -63,6 +66,7 @@ def _cifar10(path, num_dev, num_train, format):
 
     return x_train, y_train, x_test, y_test, x_dev, y_dev
 
+
 def _cifar100(path, num_dev, num_train, format):
     import CIFAR100_process as cf100
     (X_train, Y_train), (X_test, Y_test) = cf100.load_data()
@@ -75,20 +79,24 @@ def _cifar100(path, num_dev, num_train, format):
     x_dev, y_dev = _get_subset(num_dev, X_train, Y_train)
     return x_train, y_train, x_test, y_test, x_dev, y_dev
 
+
 def _imagenet(path, num_dev, num_train, format):
     pass
+
 
 def _coco(path, num_dev, num_train, format):
     pass
 
+
 _switch = {
-    'cifar10' : _cifar10,
-    'cifar100' : _cifar100,
-    'imagenet' : _imagenet,
-    'coco' : _coco
+    'cifar10': _cifar10,
+    'cifar100': _cifar100,
+    'imagenet': _imagenet,
+    'coco': _coco
 }
 
-def data_augment(data_set, path, num_train, num_dev = 500, image_data_format = 'channels_first'):
+
+def data_augment(data_set, path, num_train, num_dev=500, image_data_format='channels_first'):
     """Get enhanced data sets for training, testing
 
     Get a subset of the target dataset based on the parameters entered.This subset
@@ -111,7 +119,8 @@ def data_augment(data_set, path, num_train, num_dev = 500, image_data_format = '
     """
     return _switch[data_set](path, num_train, num_dev, image_data_format)
 
-def view_detail(data_set, path = None, show_image = False):
+
+def view_detail(data_set, path=None, show_image=False):
     """Test the type and shape of the data obtained.
 
     The default output is the following data:
@@ -124,14 +133,18 @@ def view_detail(data_set, path = None, show_image = False):
         path: string, relative path of the required data set(cifar10 does not need to provide a path).
         show_image: bool, decide whether to output images, default is flase.
     """
-    x_train, y_train, x_test, y_test, x_dev, y_dev = data_augment(data_set, path, num_train=10, num_dev=10)
+    x_train, y_train, x_test, y_test, x_dev, y_dev = data_augment(
+        data_set, path, num_train=10, num_dev=10)
     print('The type of data:')
-    print('x_train type: %s, x_test type: %s, x_dev type: %s'%(type(x_train), type(x_test), type(x_dev)))
-    print('y_train type: %s, y_test type: %s, y_dev type: %s\n'%(type(y_train), type(y_test), type(y_dev)))
+    print('x_train type: %s, x_test type: %s, x_dev type: %s' %
+          (type(x_train), type(x_test), type(x_dev)))
+    print('y_train type: %s, y_test type: %s, y_dev type: %s\n' %
+          (type(y_train), type(y_test), type(y_dev)))
     print('The shape of data:')
-    print('x_train shape: %s\ny_train shape: %s'%(x_train.shape, y_train.shape))
-    print('x_test shape: %s\ny_test shape: %s'%(x_test.shape, y_test.shape))
-    print('x_dev shape: %s\ny_dev shape: %s'%(x_dev.shape, y_dev.shape))
+    print('x_train shape: %s\ny_train shape: %s' %
+          (x_train.shape, y_train.shape))
+    print('x_test shape: %s\ny_test shape: %s' % (x_test.shape, y_test.shape))
+    print('x_dev shape: %s\ny_dev shape: %s' % (x_dev.shape, y_dev.shape))
     if show_image:
         image = x_train[0]
         red = image[0].reshape(1024, 1)

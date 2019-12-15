@@ -1,17 +1,18 @@
-#Python 3.6.9 64-bit(tensorflow-gpu)
+# Python 3.6.9 64-bit(tensorflow-gpu)
 
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"]='3'
-from keras.datasets import cifar10
-from keras.utils import np_utils
-import keras.backend as K
-import numpy as np
 import random
+import numpy as np
+import keras.backend as K
+from keras.utils import np_utils
+from keras.datasets import cifar10
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
 K.set_image_data_format('channels_first')
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
-def load_data(data_set = "cifar10", num_dev = 500):
+
+def load_data(data_set="cifar10", num_dev=500):
     """
     get the chosen data set
 
@@ -29,15 +30,18 @@ def load_data(data_set = "cifar10", num_dev = 500):
     else:
         pass
 
+
 def load_cifar10_train():
     x_tr = x_train.astype('float32') / 255
     y_tr = np_utils.to_categorical(y_train, 10)
     return x_tr, y_tr
 
+
 def load_cifar10_test():
     x_te = x_test.astype('float32') / 255
     y_te = np_utils.to_categorical(y_test, 10)
     return x_te, y_te
+
 
 def load_dev(num_dev, x_tr, y_tr):
     """

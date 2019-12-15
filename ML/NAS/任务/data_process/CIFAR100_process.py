@@ -4,12 +4,15 @@ import numpy as np
 train_PATH = 'C:/AutoML/CIFAR100/train'
 test_PATH = 'C:/AutoML/CIFAR100/test'
 #'filenames', 'batch_label', 'fine_labels', 'coarse_labels', 'data'
+
+
 def unpickle(file):
     import pickle
     f = open(file, 'rb')
-    dict = pickle.load(f, encoding = 'iso-8859-1')
+    dict = pickle.load(f, encoding='iso-8859-1')
     f.close()
     return dict
+
 
 def load_data():
     dic = unpickle(train_PATH)

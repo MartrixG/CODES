@@ -1,4 +1,4 @@
-#Python 3.6.9 64-bit(tensorflow-gpu)
+# Python 3.6.9 64-bit(tensorflow-gpu)
 '''
     CIFAR-10数据处理。
     数据说明：
@@ -17,23 +17,31 @@ file_batch = 'D:/LEARNING/CODES/ML/图像识别/data/CIFAR-10/cifar-10-batches-p
 file_meta = 'D:/LEARNING/CODES/ML/图像识别/data/CIFAR-10/cifar-10-batches-py/batches.meta'
 file_test = 'D:/LEARNING/CODES/ML/图像识别/data/CIFAR-10/cifar-10-batches-py/test_batch'
 
+
 def unpickle(file):
     f = open(file, 'rb')
-    dict = pickle.load(f, encoding = 'iso-8859-1')
+    dict = pickle.load(f, encoding='iso-8859-1')
     f.close()
     return dict
+
+
 '''
 num_batch: Number of batch to train
 return: data, labels
 '''
+
+
 def load_train_data(num_batch):
     file_name = file_batch + str(num_batch)
     dic = unpickle(file_name)
     return dic['data'], dic['labels']
 
+
 '''
 return: all 5 batches data and labels
 '''
+
+
 def load_all_train_data():
     data, label = load_train_data(1)
     for i in range(2, 6):
@@ -42,19 +50,25 @@ def load_all_train_data():
         label.extend(tmp_label)
     return data, label
 
+
 '''
 to load test data and labels
 return: data, labels
 '''
+
+
 def load_test_data():
     dic = unpickle(file_test)
     return dic['data'], dic['labels']
+
 
 '''
 view the picture num_pic of batch num_ba
 num_pic: the number of picture to view
 num_ba: the number of batch choose
 '''
+
+
 def view_pic(num_pic, num_ba):
     meta = unpickle(file_meta)
     data, labels = load_train_data(num_ba)
@@ -67,5 +81,6 @@ def view_pic(num_pic, num_ba):
     print(meta['label_names'][labels[num_pic]])
     plt.imshow(pic)
     plt.show()
+
 
 view_pic(10, 1)

@@ -1,25 +1,26 @@
-#Python 3.6.9 64-bit(tensorflow-gpu)
+# Python 3.6.9 64-bit(tensorflow-gpu)
 
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"]='3'
-
-from keras.layers import Input, Dense, Flatten, AveragePooling2D, Add, Activation, Conv2D
-from keras.models import Model, load_model
-from keras.callbacks import ModelCheckpoint, LearningRateScheduler, ReduceLROnPlateau
-from keras.regularizers import l2
-
-import Res_blocks as block
 import Data_process as data
+import Res_blocks as block
+from keras.regularizers import l2
+from keras.callbacks import ModelCheckpoint, LearningRateScheduler, ReduceLROnPlateau
+from keras.models import Model, load_model
+from keras.layers import Input, Dense, Flatten, AveragePooling2D, Add, Activation, Conv2D
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+
 
 num_classes = 10
 batch_size = 32
 epochs = 100
 
-#load train data and labels
+# load train data and labels
 x_train, y_train, x_test, y_test, x_dev, y_dev = data.load_data()
 
 #model = ResNet50(input_shape = (3, 32, 32), classes = 10)
-def ResNet50(input_shape = (3, 32, 32), classes = 10):
+
+
+def ResNet50(input_shape=(3, 32, 32), classes=10):
     """
     Implementation of the popular ResNet50 the following architecture:
     CONV2D -> BATCHNORM -> RELU -> MAXPOOL -> CONVBLOCK -> IDBLOCK*2 -> CONVBLOCK -> IDBLOCK*3
@@ -41,96 +42,109 @@ def ResNet50(input_shape = (3, 32, 32), classes = 10):
     X = X_input
 
     #16, 32, 32
-    X = block.convolution_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'a', s = 1)
-    X = block.identity_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'b')
-    X = block.identity_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'c')
-    X = block.identity_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'd')
-    X = block.identity_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'e')
-    X = block.identity_block(X, f = 3, filters = [8, 8, 16], stage = 1, block = 'f')
+    X = block.convolution_block(
+        X, f=3, filters=[8, 8, 16], stage=1, block='a', s=1)
+    X = block.identity_block(X, f=3, filters=[8, 8, 16], stage=1, block='b')
+    X = block.identity_block(X, f=3, filters=[8, 8, 16], stage=1, block='c')
+    X = block.identity_block(X, f=3, filters=[8, 8, 16], stage=1, block='d')
+    X = block.identity_block(X, f=3, filters=[8, 8, 16], stage=1, block='e')
+    X = block.identity_block(X, f=3, filters=[8, 8, 16], stage=1, block='f')
 
-    X = block.convolution_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'a', s = 2)#32, 16, 16
-    X = block.identity_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'b')
-    X = block.identity_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'c')
-    X = block.identity_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'd')
-    X = block.identity_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'e')
-    X = block.identity_block(X, f = 3, filters = [16, 16, 32], stage = 2, block = 'f')
+    X = block.convolution_block(
+        X, f=3, filters=[16, 16, 32], stage=2, block='a', s=2)  # 32, 16, 16
+    X = block.identity_block(X, f=3, filters=[16, 16, 32], stage=2, block='b')
+    X = block.identity_block(X, f=3, filters=[16, 16, 32], stage=2, block='c')
+    X = block.identity_block(X, f=3, filters=[16, 16, 32], stage=2, block='d')
+    X = block.identity_block(X, f=3, filters=[16, 16, 32], stage=2, block='e')
+    X = block.identity_block(X, f=3, filters=[16, 16, 32], stage=2, block='f')
 
-    X = block.convolution_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'a', s = 2)#64, 8, 8
-    X = block.identity_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'b')
-    X = block.identity_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'c')
-    X = block.identity_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'd')
-    X = block.identity_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'e')
-    X = block.identity_block(X, f = 3, filters = [32, 32, 64], stage = 3, block = 'f')
+    X = block.convolution_block(
+        X, f=3, filters=[32, 32, 64], stage=3, block='a', s=2)  # 64, 8, 8
+    X = block.identity_block(X, f=3, filters=[32, 32, 64], stage=3, block='b')
+    X = block.identity_block(X, f=3, filters=[32, 32, 64], stage=3, block='c')
+    X = block.identity_block(X, f=3, filters=[32, 32, 64], stage=3, block='d')
+    X = block.identity_block(X, f=3, filters=[32, 32, 64], stage=3, block='e')
+    X = block.identity_block(X, f=3, filters=[32, 32, 64], stage=3, block='f')
 
-    X = AveragePooling2D(pool_size = (2, 2), padding = "same")(X)#64, 2, 2
+    X = AveragePooling2D(pool_size=(2, 2), padding="same")(X)  # 64, 2, 2
 
     X = Flatten()(X)
-    X = Dense(classes, activation = "softmax", name = "fc" + str(classes), kernel_initializer = 'he_normal')(X)
+    X = Dense(classes, activation="softmax", name="fc" +
+              str(classes), kernel_initializer='he_normal')(X)
 
-    model = Model(inputs = X_input, outputs = X, name = "ResNet50")
+    model = Model(inputs=X_input, outputs=X, name="ResNet50")
 
     return model
 
 #model = ResNet20(input_shape = (3, 32, 32), classes = 10)
-def ResNet20(input_shape = (3, 32 ,32), classes = 10):
-    inputs = Input(shape = input_shape)
+
+
+def ResNet20(input_shape=(3, 32, 32), classes=10):
+    inputs = Input(shape=input_shape)
 
     x = block.res_block(inputs)
     for i in range(6):
-        tmp = block.res_block(inputs = x)
-        x = Add()([x, tmp])
-        x = Activation('relu')(x)
-    
-    for i in range(6):
-        if i == 0:
-            tmp = block.res_block(inputs = x, strides = 2, num_filters = 32)
-        else:
-            tmp = block.res_block(inputs = x, num_filters = 32)
-        if i == 0:
-            x = Conv2D(32, kernel_size = 3, strides = 2, padding = 'same',
-                        kernel_initializer = 'he_normal', kernel_regularizer = l2(1e-4))(x)
+        tmp = block.res_block(inputs=x)
         x = Add()([x, tmp])
         x = Activation('relu')(x)
 
     for i in range(6):
         if i == 0:
-            tmp = block.res_block(inputs = x, strides = 2, num_filters = 64)
+            tmp = block.res_block(inputs=x, strides=2, num_filters=32)
         else:
-            tmp = block.res_block(inputs = x, num_filters = 64)
+            tmp = block.res_block(inputs=x, num_filters=32)
         if i == 0:
-            x = Conv2D(64, kernel_size = 3, strides = 2, padding = 'same',
-                        kernel_initializer = 'he_normal', kernel_regularizer = l2(1e-4))(x)
+            x = Conv2D(32, kernel_size=3, strides=2, padding='same',
+                       kernel_initializer='he_normal', kernel_regularizer=l2(1e-4))(x)
         x = Add()([x, tmp])
         x = Activation('relu')(x)
-    x = AveragePooling2D(pool_size = 2)(x)
+
+    for i in range(6):
+        if i == 0:
+            tmp = block.res_block(inputs=x, strides=2, num_filters=64)
+        else:
+            tmp = block.res_block(inputs=x, num_filters=64)
+        if i == 0:
+            x = Conv2D(64, kernel_size=3, strides=2, padding='same',
+                       kernel_initializer='he_normal', kernel_regularizer=l2(1e-4))(x)
+        x = Add()([x, tmp])
+        x = Activation('relu')(x)
+    x = AveragePooling2D(pool_size=2)(x)
     x = Flatten()(x)
-    x = Dense(num_classes, activation = 'softmax', kernel_initializer = 'he_normal')(x)
+    x = Dense(num_classes, activation='softmax',
+              kernel_initializer='he_normal')(x)
 
-    model = Model(inputs = inputs, outputs = x)
+    model = Model(inputs=inputs, outputs=x)
     return model
 
-model = ResNet20(input_shape = (3, 32, 32), classes = num_classes)  
-model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
 
-checkpoint = ModelCheckpoint(filepath='./cifar10_resnet20.h5',monitor='val_acc',
-                             verbose=1,save_best_only=True)
+model = ResNet20(input_shape=(3, 32, 32), classes=num_classes)
+model.compile(optimizer='adam', loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+checkpoint = ModelCheckpoint(filepath='./cifar10_resnet20.h5', monitor='val_acc',
+                             verbose=1, save_best_only=True)
+
+
 def lr_sch(epoch):
-    #200 total
-    if epoch <50:
+    # 200 total
+    if epoch < 50:
         return 1e-3
-    if 50<=epoch<100:
+    if 50 <= epoch < 100:
         return 1e-4
-    if epoch>=100:
+    if epoch >= 100:
         return 1e-5
 
-#learing rate 
+
+# learing rate
 lr_scheduler = LearningRateScheduler(lr_sch)
-lr_reducer = ReduceLROnPlateau(monitor = 'val_acc', factor = 0.2, patience = 5, mode = 'max', min_lr = 1e-3)
+lr_reducer = ReduceLROnPlateau(
+    monitor='val_acc', factor=0.2, patience=5, mode='max', min_lr=1e-3)
 callbacks = [checkpoint, lr_scheduler, lr_reducer]
 
-model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size)
+model.fit(x_dev, y_dev, epochs=epochs, batch_size=batch_size)
 #model.fit(x_dev, y_dev, epochs = epochs, batch_size = batch_size, validation_data = (x_test,y_test), verbose = 1,callbacks = callbacks)
-#model.summary()
+# model.summary()
 preds = model.evaluate(x_test, y_test)
-print ("Loss = " + str(preds[0]))
-print ("Test Accuracy = " + str(preds[1]))
+print("Loss = " + str(preds[0]))
+print("Test Accuracy = " + str(preds[1]))
