@@ -6,6 +6,7 @@
 *.h5
 *.jpg
 *.txt
+.idea/
 data/
 cache/
 /ML/情感分析/Emotional Classification/*
