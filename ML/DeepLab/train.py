@@ -73,7 +73,7 @@ def lr_sch(epoch):
 # learning rate control
 lr_scheduler = LearningRateScheduler(lr_sch)
 lr_reducer = ReduceLROnPlateau(
-    monitor='los', factor=0.2, patience=5, mode='max', min_lr=1e-3)
+    monitor='loss', factor=0.2, patience=5, mode='max', min_lr=1e-3)
 checkpoint = ModelCheckpoint(filepath='./DeepLabV3.h5',
                              monitor='loss', verbose=1, save_best_only=True)
 callbacks = [checkpoint, lr_scheduler, lr_reducer]
