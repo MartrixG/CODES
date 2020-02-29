@@ -6,6 +6,7 @@
 *.h5
 *.jpg
 *.txt
+*.log
 .idea/
 data/
 cache/
@@ -13,3 +14,4 @@ cache/
 /ML/论文/*
 /ML/情感分析/sa_demo/*
 /tmp_test
+*.pth
