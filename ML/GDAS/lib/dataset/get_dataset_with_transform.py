@@ -2,8 +2,10 @@ import os.path as osp
 from copy import deepcopy
 
 import numpy as np
-import torch
+from torch.utils.data import DataLoader, sampler
 from torchvision import datasets
+from lib.util.configure_util import load_config
+from lib.dataset.SearchDataset import SearchDataset
 import torchvision.transforms as transforms
 from PIL import Image
 
@@ -12,7 +14,7 @@ Dataset2Class = {'cifar10': 10,
 
 
 class CUTOUT(object):
-
+    # make a mask to cover some part of pic
     def __init__(self, length):
         self.length = length
 
@@ -38,6 +40,7 @@ class CUTOUT(object):
 
 
 def get_dataset(name, root, cutout):
+    # read the original data
     if name == 'cifar10':
         mean = [x / 255 for x in [125.3, 123.0, 113.9]]
         std = [x / 255 for x in [63.0, 62.1, 66.7]]
@@ -71,3 +74,60 @@ def get_dataset(name, root, cutout):
         raise TypeError("Unknown dataset : {:}".format(name))
     class_num = Dataset2Class[name]
     return train_data, test_data, xshape, class_num
+
+
+def get_nas_search_loaders(train_data, valid_data, dataset, config_root, batch_size, workers):
+    # get search_loader, train_loader, valid_loader
+    if isinstance(batch_size, (list, tuple)):
+        batch, test_batch = batch_size
+    else:
+        batch, test_batch = batch_size, batch_size
+    if dataset == 'cifar10':
+        cifar_split = load_config('{:}/cifar10-split.txt'.format(config_root), None, None)
+        train_split, valid_split = cifar_split.train, cifar_split.valid
+        # search over the proposed training and validation set
+        # To split data
+        xvalid_data = deepcopy(train_data)
+        if hasattr(xvalid_data, 'transforms'):  # to avoid a print issue
+            xvalid_data.transforms = valid_data.transform
+        xvalid_data.transform = deepcopy(valid_data.transform)
+        search_data = SearchDataset(dataset, train_data, train_split, valid_split)
+        # data loader
+        search_loader = DataLoader(search_data,
+                                   batch_size=batch,
+                                   shuffle=True,
+                                   num_workers=workers,
+                                   pin_memory=True)
+        train_loader = DataLoader(train_data,
+                                  batch_size=batch,
+                                  sampler=sampler.SubsetRandomSampler(train_split),
+                                  num_workers=workers, pin_memory=True)
+        valid_loader = DataLoader(xvalid_data,
+                                  batch_size=test_batch,
+                                  sampler=sampler.SubsetRandomSampler(valid_split),
+                                  num_workers=workers, pin_memory=True)
+    elif dataset == 'cifar100':
+        cifar100_test_split = load_config('{:}/cifar100-split.txt'.format(config_root), None, None)
+        search_train_data = train_data
+        search_valid_data = deepcopy(valid_data)
+        search_valid_data.transform = train_data.transform
+        search_data = SearchDataset(dataset, [search_train_data, search_valid_data],
+                                    list(range(len(search_train_data))), cifar100_test_split.xvalid)
+        search_loader = DataLoader(search_data,
+                                   batch_size=batch,
+                                   shuffle=True,
+                                   num_workers=workers,
+                                   pin_memory=True)
+        train_loader = DataLoader(train_data, batch_size=batch,
+                                  shuffle=True,
+                                  num_workers=workers,
+                                  pin_memory=True)
+        valid_loader = DataLoader(valid_data,
+                                  batch_size=test_batch,
+                                  sampler=sampler.SubsetRandomSampler(cifar100_test_split.xvalid),
+                                  num_workers=workers,
+                                  pin_memory=True)
+    else:
+        raise ValueError('invalid dataset : {:}'.format(dataset))
+    return search_loader, train_loader, valid_loader
+

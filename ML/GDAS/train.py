@@ -21,7 +21,8 @@ if __name__ == '__main__':
     parser.add_argument('--search_space_name', default='darts', type=str, help='The search space name.')
     parser.add_argument('--track_running_stats', default=1, type=int, choices=[0, 1],
                         help='Whether use track_running_stats or not in the BN layer.')
-    parser.add_argument('--config_path', default='config/GDAS-opt.config', type=str, help='The path of the configuration.')
+    parser.add_argument('--config_path', default='config/GDAS-opt.config', type=str, help='The path of the '
+                                                                                          'configuration.')
     parser.add_argument('--model_config', default='config/GDAS-arch.config', type=str,
                         help='The path of the model configuration. When this arg is set, it will cover max_nodes / '
                              'channels / num_cells.')
