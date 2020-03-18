@@ -102,10 +102,15 @@ class NASNetWorkGDAS(nn.Module):
     def forward(self, inputs):
         def get_gumbel_prob(xins):
             while True:
+                # 生成符合指数分布的形状和xins相同的随机数（再取对数底数为e）
                 gumbels = -torch.empty_like(xins).exponential_().log()
+                # 对8个操作进行log_softmax加上随机数再除以10
                 logits = (xins.log_softmax(dim=1) + gumbels) / self.tau
+                # 在第二个维度对logits计算softmax
                 probs = nn.functional.softmax(logits, dim=1)
+                # 从8个操作选出概率最大的
                 index = probs.max(-1, keepdim=True)[1]
+                # one_hot编码
                 one_h = torch.zeros_like(logits).scatter_(-1, index, 1.0)
                 hardwts = one_h - probs.detach() + probs
                 if (torch.isinf(gumbels).any()) or (torch.isinf(probs).any()) or (torch.isnan(probs).any()):

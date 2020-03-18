@@ -35,8 +35,8 @@ def search_func(xloader, network, criterion, scheduler, w_optimizer, a_optimizer
     end = time.time()
     for step, (base_inputs, base_targets, arch_inputs, arch_targets) in enumerate(xloader):
         scheduler.update(None, 1.0 * step / len(xloader))
-        base_targets = base_targets.cuda(non_blocking=True)
-        arch_targets = arch_targets.cuda(non_blocking=True)
+        # base_targets = base_targets.cuda(non_blocking=True)
+        # arch_targets = arch_targets.cuda(non_blocking=True)
         # measure data loading time
         data_time.update(time.time() - end)
 
