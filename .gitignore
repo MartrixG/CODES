@@ -15,3 +15,4 @@ cache/
 /ML/情感分析/sa_demo/*
 /tmp_test
 *.pth
+*.zip
