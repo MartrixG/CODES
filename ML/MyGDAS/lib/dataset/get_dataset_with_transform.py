@@ -6,10 +6,12 @@ from torch.utils.data import DataLoader, sampler
 from torchvision import datasets
 from lib.util.configure_util import load_config
 from lib.dataset.SearchDataset import SearchDataset
+from lib.dataset.GenDataset import GenDataset
 import torchvision.transforms as transforms
 
 Dataset2Class = {'cifar10': 10,
-                 'cifar100': 100}
+                 'cifar100': 100,
+                 'HAPT': 12}
 
 
 class CUTOUT(object):
@@ -46,6 +48,8 @@ def get_dataset(name, root, cutout):
     elif name == 'cifar100':
         mean = [x / 255 for x in [129.3, 124.1, 112.4]]
         std = [x / 255 for x in [68.2, 65.4, 70.4]]
+    elif name == 'HAPT':
+        pass
     else:
         raise TypeError("Unknown dataset : {:}".format(name))
 
@@ -58,6 +62,8 @@ def get_dataset(name, root, cutout):
         train_transform = transforms.Compose(lists)
         test_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
         xshape = (1, 3, 32, 32)
+    elif name == 'HAPT':
+        xshape = (1, 561)
     else:
         raise TypeError("Unknown dataset : {:}".format(name))
 
@@ -69,6 +75,19 @@ def get_dataset(name, root, cutout):
         train_data = datasets.CIFAR100(root, train=True, transform=train_transform, download=True)
         test_data = datasets.CIFAR100(root, train=False, transform=test_transform, download=True)
         assert len(train_data) == 50000 and len(test_data) == 10000
+    elif name == 'HAPT':
+        x_train_file = open('{:}/Train/X_train.txt'.format(root))
+        y_train_file = open('{:}/Train/Y_train.txt'.format(root))
+        x_test_file = open('{:}/Test/X_test.txt'.format(root))
+        y_test_file = open('{:}/Test/Y_test.txt'.format(root))
+        x_train_src = np.array([list(map(np.float32, item.split(' '))) for item in x_train_file.readlines()])
+        y_train_src = np.array(list(map(np.int, y_train_file.readlines())))
+        x_test_src = np.array([list(map(np.float32, item.split(' '))) for item in x_test_file.readlines()])
+        y_test_src = np.array(list(map(np.int, y_test_file.readlines())))
+        assert len(x_train_src) == 7767 and len(y_train_src) == 7767
+        assert len(x_test_src) == 3162 and len(y_test_src) == 3162
+        train_data = (x_train_src, y_train_src)
+        test_data = (x_test_src, y_test_src)
     else:
         raise TypeError("Unknown dataset : {:}".format(name))
     class_num = Dataset2Class[name]
@@ -126,7 +145,17 @@ def get_nas_search_loaders(train_data, valid_data, dataset, config_root, batch_s
                                   sampler=sampler.SubsetRandomSampler(cifar100_test_split.xvalid),
                                   num_workers=workers,
                                   pin_memory=True)
+    elif dataset == 'HAPT':
+        HAPT_split = load_config('{:}/HAPT-split.txt'.format(config_root), None, None)
+        train_split, valid_split = HAPT_split.train, HAPT_split.valid
+        search_data = GenDataset(dataset, train_data, train_split, valid_split, None, None, None)
+        search_loader = DataLoader(search_data,
+                                   batch_size=batch,
+                                   shuffle=True,
+                                   num_workers=workers,
+                                   pin_memory=True)
+        train_loader = None
+        valid_loader = None
     else:
         raise ValueError('invalid dataset : {:}'.format(dataset))
     return search_loader, train_loader, valid_loader
-
