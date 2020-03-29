@@ -29,10 +29,13 @@ if __name__ == '__main__':
     # log
     parser.add_argument('--arch_nas_dataset', type=str,
                         help='The path to load the architecture dataset (tiny-nas-benchmark).')
+    parser.add_argument('--record_file', type=str, default='Records.txt',
+                        help='The path to log the record for each epoch.')
+    parser.add_argument('--genotype_file', type=str, default='genotype.txt')
 
-    parser.add_argument('--workers', type=int, default=4, help='number of data loading workers (default: 2)')
+    parser.add_argument('--workers', type=int, default=4, help='number of data loading workers (default: 4)')
     parser.add_argument('--save_dir', type=str, default='log/', help='Folder to save checkpoints and log.')
-    parser.add_argument('--print_freq', type=int, default=200, help='print frequency (default: 200)')
+    parser.add_argument('--print_frequency', type=int, default=200, help='print frequency (default: 200)')
     parser.add_argument('--rand_seed', type=int, default=-1, help='manual seed')
     args = parser.parse_args()
     if args.rand_seed is None or args.rand_seed < 0:

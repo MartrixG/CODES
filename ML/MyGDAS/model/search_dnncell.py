@@ -83,7 +83,7 @@ class DNNModel(nn.Module):
     def get_tau(self):
         return self.tau
 
-    def genotype(self):
+    def genotype(self, genotype_file):
         def _parse(weights):
             gene = []
             for i in range(2, self.layer_number + 2):
@@ -94,12 +94,12 @@ class DNNModel(nn.Module):
                     for k, op_name in enumerate(self.space):
                         # if op_name == 'none': continue
                         edges.append((op_name, i, j, ws[k]))
-                    with open("genotype.txt", "a+") as f:
+                    with open(genotype_file, "a+") as f:
                         f.write("node_str: " + str(node_str) + "\n")
                         f.write("edges: " + str(edges) + "\n")
                     edges = sorted(edges, key=lambda x: -x[-1])
                     selected_edges = edges[:1]
-                    with open("genotype.txt", "a+") as f:
+                    with open(genotype_file, "a+") as f:
                         f.write("edges: " + str(edges) + "\n")
                         f.write("selected_edges: " + str(selected_edges) + "\n\n\n")
                     gene.append(tuple(selected_edges))
