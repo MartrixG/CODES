@@ -40,7 +40,8 @@ def prepare_logger(xargs):
 
 def save_checkpoint(state, filename, logger):
     if osp.isfile(filename):
-        if hasattr(logger, 'log'): logger.log('Find {:} exist, delete is at first before saving'.format(filename))
+        if hasattr(logger, 'log'):
+            logger.log('Find {:} exist, delete is at first before saving'.format(filename))
         os.remove(filename)
     torch.save(state, filename)
     assert osp.isfile(filename), 'save filename : {:} failed, which is not found.'.format(filename)
@@ -51,7 +52,8 @@ def save_checkpoint(state, filename, logger):
 
 def copy_checkpoint(src, dst, logger):
     if osp.isfile(dst):
-        if hasattr(logger, 'log'): logger.log('Find {:} exist, delete is at first before saving'.format(dst))
+        if hasattr(logger, 'log'):
+            logger.log('Find {:} exist, delete is at first before saving'.format(dst))
         os.remove(dst)
     copyfile(src, dst)
     if hasattr(logger, 'log'):

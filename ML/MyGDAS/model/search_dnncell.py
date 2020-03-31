@@ -1,6 +1,7 @@
 from model.cell.cell_operations import OPS, FactorizedReduce
 import torch.nn as nn
 import torch
+from copy import deepcopy
 
 
 class MixedOp(nn.Module):
@@ -21,7 +22,10 @@ class MixedOp(nn.Module):
 
 def Calculate_OutC(layer_in, track_running_stats, search_space):
     layer_out = 0
-    for name in search_space:
+    space = deepcopy(search_space)
+    space.remove('none')
+    space.remove('dense_layer')
+    for name in space:
         cell = OPS[name](layer_in, None, track_running_stats)
         C_out_cell = cell.out_dim
         if C_out_cell > layer_out:
@@ -31,7 +35,7 @@ def Calculate_OutC(layer_in, track_running_stats, search_space):
 
 class DNNModel(nn.Module):
 
-    def __init__(self, config, track_running_stats=True):
+    def __init__(self, config, logger, track_running_stats=True):
         super(DNNModel, self).__init__()
         self.C_in = config.C_in
         self.C_out = config.C_out
@@ -41,14 +45,15 @@ class DNNModel(nn.Module):
             layer_number += 1
             C_in_test = C_in_test // 2
         self.layer_number = layer_number
-        print("number of layers: " + str(layer_number) + "\n")
 
-        self.space = config.search_space
+        logger.log("number of layers: {:}".format(layer_number))
+
+        self.space = config.space
         self.edges = nn.ModuleDict()
         self.reductions = nn.ModuleDict()
         layer_in, layer_out_list = self.C_in, [self.C_in, self.C_in]
         for i in range(2, layer_number + 2):
-            layer_out = Calculate_OutC(layer_in, track_running_stats)
+            layer_out = Calculate_OutC(layer_in, track_running_stats, self.space)
             for j in range(i):
                 node_str = '{:}<-{:}'.format(i, j)
                 layer_in_cell = layer_out_list[j]
@@ -96,7 +101,6 @@ class DNNModel(nn.Module):
                         edges.append((op_name, i, j, ws[k]))
                     with open(genotype_file, "a+") as f:
                         f.write("node_str: " + str(node_str) + "\n")
-                        f.write("edges: " + str(edges) + "\n")
                     edges = sorted(edges, key=lambda x: -x[-1])
                     selected_edges = edges[:1]
                     with open(genotype_file, "a+") as f:
@@ -108,6 +112,11 @@ class DNNModel(nn.Module):
         with torch.no_grad():
             gene_arc = _parse(torch.softmax(self.arch_parameters, dim=-1).cpu().numpy())
         return gene_arc
+
+    def show_alphas(self):
+        with torch.no_grad():
+            A = 'arch-parameters :\n{:}'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
+        return '{:}'.format(A)
 
     def forward_ourgdas(self, x, weights, indexs):
         s0, s1, states = x, x, [x, x]

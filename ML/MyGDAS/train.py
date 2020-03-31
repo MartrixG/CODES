@@ -2,6 +2,7 @@ import argparse
 import sys
 import random
 from pathlib import Path
+from model import MyGDAS
 
 if __name__ == '__main__':
     lib_dir = (Path(__file__).parent / '..' / '..' / 'lib').resolve()
@@ -9,7 +10,7 @@ if __name__ == '__main__':
         sys.path.insert(0, str(lib_dir))
     parser = argparse.ArgumentParser("MyGDAS")
     # data set
-    parser.add_argument('--data_path', type=str, default='data/', help='Path to dataset')
+    parser.add_argument('--data_path', type=str, default='data/HAPT/', help='Path to dataset')
     parser.add_argument('--dataset', type=str, default='HAPT', choices=['cifar10', 'cifar100', 'HAPT'],
                         help='Choose between Cifar10/100 and HAPT.')
 
@@ -35,8 +36,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers (default: 4)')
     parser.add_argument('--save_dir', type=str, default='log/', help='Folder to save checkpoints and log.')
-    parser.add_argument('--print_frequency', type=int, default=200, help='print frequency (default: 200)')
+    parser.add_argument('--print_frequency', type=int, default=20, help='print frequency (default: 200)')
     parser.add_argument('--rand_seed', type=int, default=-1, help='manual seed')
     args = parser.parse_args()
     if args.rand_seed is None or args.rand_seed < 0:
         args.rand_seed = random.randint(1, 100000)
+    MyGDAS.train(args)

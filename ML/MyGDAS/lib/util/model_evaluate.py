@@ -67,7 +67,10 @@ def compute_average_flops_cost(model):
 # ---- Internal functions
 def pool_flops_counter_hook(pool_module, inputs, output):
     batch_size = inputs[0].size(0)
-    kernel_size = pool_module.kernel_size
+    if isinstance(pool_module.kernel_size, tuple):
+        kernel_size = pool_module.kernel_size[0]
+    else:
+        kernel_size = pool_module.kernel_size
     out_C, output_height, output_width = output.shape[1:]
     assert out_C == inputs[0].size(1), '{:} vs. {:}'.format(out_C, inputs[0].size())
 

@@ -113,7 +113,6 @@ for epoch in range(epochs):
         w_optimizer.step()
         # record
         base_prec1, base_prec5 = obtain_accuracy(logits.data, base_targets.data, topk=(1, min(5, C_out)))
-        print("base_prec1: " + str(base_prec1))
         base_losses.update(base_loss.item(), base_inputs.size(0))
         base_top1.update(base_prec1.item(), base_inputs.size(0))
         base_top5.update(base_prec5.item(), base_inputs.size(0))

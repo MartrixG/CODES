@@ -76,18 +76,18 @@ def get_dataset(name, root, cutout):
         test_data = datasets.CIFAR100(root, train=False, transform=test_transform, download=True)
         assert len(train_data) == 50000 and len(test_data) == 10000
     elif name == 'HAPT':
-        x_train_file = open('{:}/Train/X_train.txt'.format(root))
-        y_train_file = open('{:}/Train/Y_train.txt'.format(root))
-        x_test_file = open('{:}/Test/X_test.txt'.format(root))
-        y_test_file = open('{:}/Test/Y_test.txt'.format(root))
+        x_train_file = open('{:}Train/X_train.txt'.format(root))
+        y_train_file = open('{:}Train/Y_train.txt'.format(root))
+        x_test_file = open('{:}Test/X_test.txt'.format(root))
+        y_test_file = open('{:}Test/Y_test.txt'.format(root))
         x_train_src = np.array([list(map(np.float32, item.split(' '))) for item in x_train_file.readlines()])
-        y_train_src = np.array(list(map(np.int, y_train_file.readlines())))
+        y_train_src = (np.array(list(map(np.int, y_train_file.readlines()))) - 1)
         x_test_src = np.array([list(map(np.float32, item.split(' '))) for item in x_test_file.readlines()])
-        y_test_src = np.array(list(map(np.int, y_test_file.readlines())))
+        y_test_src = (np.array(list(map(np.int, y_test_file.readlines()))) - 1)
         assert len(x_train_src) == 7767 and len(y_train_src) == 7767
         assert len(x_test_src) == 3162 and len(y_test_src) == 3162
-        train_data = (x_train_src, y_train_src)
-        test_data = (x_test_src, y_test_src)
+        train_data = (torch.from_numpy(x_train_src), torch.tensor(y_train_src, dtype=torch.int64))
+        test_data = (torch.from_numpy(x_test_src), torch.tensor(y_test_src, dtype=torch.int64))
     else:
         raise TypeError("Unknown dataset : {:}".format(name))
     class_num = Dataset2Class[name]
@@ -146,7 +146,7 @@ def get_nas_search_loaders(train_data, valid_data, dataset, config_root, batch_s
                                   num_workers=workers,
                                   pin_memory=True)
     elif dataset == 'HAPT':
-        HAPT_split = load_config('{:}/HAPT-split.txt'.format(config_root), None, None)
+        HAPT_split = load_config('{:}HAPT-split.txt'.format(config_root), None, None)
         train_split, valid_split = HAPT_split.train, HAPT_split.valid
         search_data = GenDataset(dataset, train_data, train_split, valid_split, None, None, None)
         search_loader = DataLoader(search_data,
