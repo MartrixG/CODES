@@ -38,6 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_dir', type=str, default='log/', help='Folder to save checkpoints and log.')
     parser.add_argument('--print_frequency', type=int, default=20, help='print frequency (default: 200)')
     parser.add_argument('--rand_seed', type=int, default=-1, help='manual seed')
+    parser.add_argument('--evaluate', type=str, default='test', help='choose train or test')
     args = parser.parse_args()
     if args.rand_seed is None or args.rand_seed < 0:
         args.rand_seed = random.randint(1, 100000)

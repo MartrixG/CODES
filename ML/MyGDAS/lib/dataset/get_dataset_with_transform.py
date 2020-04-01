@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, sampler
 from torchvision import datasets
 from lib.util.configure_util import load_config
 from lib.dataset.SearchDataset import SearchDataset
-from lib.dataset.GenDataset import GenDataset
+from lib.dataset.GenDataset import GenDataset, NormalDataset
 import torchvision.transforms as transforms
 
 Dataset2Class = {'cifar10': 10,
@@ -148,14 +148,23 @@ def get_nas_search_loaders(train_data, valid_data, dataset, config_root, batch_s
     elif dataset == 'HAPT':
         HAPT_split = load_config('{:}HAPT-split.txt'.format(config_root), None, None)
         train_split, valid_split = HAPT_split.train, HAPT_split.valid
-        search_data = GenDataset(dataset, train_data, train_split, valid_split, None, None, None)
+        search_data = GenDataset(dataset, train_data, train_split, valid_split)
         search_loader = DataLoader(search_data,
                                    batch_size=batch,
                                    shuffle=True,
                                    num_workers=workers,
                                    pin_memory=True)
-        train_loader = None
-        valid_loader = None
+        train_loader = DataLoader(NormalDataset(dataset, train_data),
+                                  batch_size=batch,
+                                  shuffle=True,
+                                  num_workers=workers,
+                                  pin_memory=True
+                                  )
+        valid_loader = DataLoader(NormalDataset(dataset, valid_data),
+                                  batch_size=batch,
+                                  shuffle=False,
+                                  num_workers=workers,
+                                  pin_memory=True)
     else:
         raise ValueError('invalid dataset : {:}'.format(dataset))
     return search_loader, train_loader, valid_loader

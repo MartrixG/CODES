@@ -23,8 +23,7 @@ HAPT_SPACE = ['none', 'avg_pool_3x3', 'avg_pool_5x5', 'avg_pool_7x7', 'enhance_a
               'enhance_group_dense_5', 'dense_layer']
 
 
-def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimizer, print_frequency, epoch_str, logger,
-           record_file, genotype_file):
+def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimizer, print_frequency, epoch_str, logger):
     batch_time = AverageMeter()
     base_losses, base_top1, base_top5 = AverageMeter(), AverageMeter(), AverageMeter()
     arch_losses, arch_top1, arch_top5 = AverageMeter(), AverageMeter(), AverageMeter()
@@ -71,6 +70,18 @@ def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimize
     return base_losses.avg, base_top1.avg, base_top5.avg, arch_losses.avg, arch_top1.avg, arch_top5.avg
 
 
+def test(test_loader, network, C_out):
+    test_top1, test_top5 = AverageMeter(), AverageMeter()
+    network.eval()
+    for X, Y in (test_loader):
+        test_inputs, test_targets = X.cuda(), Y.cuda()
+        output = network(test_inputs)
+        test_prec1, test_prec5 = obtain_accuracy(output.data, test_targets.data, topk=(1, min(5, C_out)))
+        test_top1.update(test_prec1.item(), test_inputs.size(0))
+        test_top5.update(test_prec5.item(), test_inputs.size(0))
+    print("***TEST result***" + "accuracy@1 : {:.2f}%, accuracy@5 : {:.2f}%".format(test_top1.avg, test_top5.avg))
+
+
 def train(xargs):
     lib_dir = (Path(__file__).parent / '..' / '..' / 'lib').resolve()
     if str(lib_dir) not in sys.path:
@@ -88,12 +99,13 @@ def train(xargs):
     logger = prepare_logger(xargs)
     # get original data(cifar10/cifar100/uci)
     train_data, valid_data, xshape, class_num = get_dataset(xargs.dataset, xargs.data_path, -1)
+    logger.log('Train Config:')
     opt_config = load_config(xargs.opt_config, {'class_num': class_num, 'xshape': xshape}, logger)
     search_loader, _, valid_loader = get_nas_search_loaders(train_data, valid_data, xargs.dataset,
                                                             'config/', opt_config.batch_size, xargs.workers)
-    logger.log('||||||| {:10s} ||||||| Search-Loader-Num={:}, batch size={:}'.format(xargs.dataset, len(search_loader),
-                                                                                     opt_config.batch_size))
-    logger.log('||||||| {:10s} ||||||| Config={:}'.format(xargs.dataset, opt_config))
+    logger.log('dataset: {:} Search-Loader-length={:}, batch size={:}'.format(xargs.dataset, len(search_loader),
+                                                                              opt_config.batch_size))
+    logger.log('Arch Config:')
     arch_config = load_config(xargs.arch_config, {'class_num': class_num,
                                                   'space': HAPT_SPACE,
                                                   'affine': False,
@@ -104,6 +116,12 @@ def train(xargs):
         search_model = DNNModel(config=arch_config, logger=logger)
     else:
         raise NameError("dataset must be in \"HAPT\", \"cifar100\", \"cifar100\"")
+    if xargs.evaluate == 'test':
+        search_model.load_state_dict(torch.load(logger.path('best'))['network'])
+        network = search_model.cuda()
+        test_loader = valid_loader
+        test(test_loader, network, arch_config.C_out)
+        return
     logger.log('search-model :\n{:}'.format(search_model))
     logger.log('model-config : {:}'.format(arch_config))
     if opt_config.criterion == 'cross_entropy':
@@ -162,8 +180,7 @@ def train(xargs):
         logger.log('\n[Search the {:}-th epoch] tau={:}'.format(epoch_str, network.get_tau()))
         base_losses, base_top1, base_top5, arch_losses, arch_top1, arch_top5 = \
             search(arch_config, search_loader, network, criterion, w_optimizer, a_optimizer,
-                   xargs.print_frequency, epoch_str, logger, xargs.save_dir + xargs.record_file,
-                   xargs.save_dir + xargs.genotype_file)
+                   xargs.print_frequency, epoch_str, logger)
         logger.log('[{:}] searching : loss={:.2f}, accuracy@1={:.2f}%, accuracy@5={:.2f}%'.format(
             epoch_str, base_losses, base_top1, base_top5))
         logger.log(
