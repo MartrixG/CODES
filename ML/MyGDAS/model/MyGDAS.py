@@ -73,7 +73,7 @@ def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimize
 def test(test_loader, network, C_out):
     test_top1, test_top5 = AverageMeter(), AverageMeter()
     network.eval()
-    for X, Y in (test_loader):
+    for X, Y in test_loader:
         test_inputs, test_targets = X.cuda(), Y.cuda()
         output = network(test_inputs)
         test_prec1, test_prec5 = obtain_accuracy(output.data, test_targets.data, topk=(1, min(5, C_out)))
@@ -129,7 +129,6 @@ def train(xargs):
     else:
         raise NameError('unknown loss function {:}'.format(opt_config.criterion))
     # criterion = nn.MSELoss()
-    criterion = criterion.cuda()
     w_optimizer = torch.optim.SGD(params=search_model.get_weights(),
                                   lr=opt_config.LR,
                                   weight_decay=opt_config.w_decay)
@@ -145,7 +144,7 @@ def train(xargs):
     logger.log('w-scheduler : {:}'.format(w_scheduler))
     logger.log('criterion   : {:}'.format(criterion))
     flop, param = get_model_infos(search_model, xshape)
-    logger.log('FLOP = {:.2f} M, Params = {:.2f} MB'.format(flop, param))
+    logger.log('FLOP = {:.6f} M, Params = {:.6f} MB'.format(flop, param))
     logger.log('search-space [{:} ops] : {:}'.format(len(HAPT_SPACE), HAPT_SPACE))
     last_info, model_base_path, model_best_path = logger.path('info'), logger.path('model'), logger.path('best')
     # network, criterion = torch.nn.DataParallel(search_model).cuda(), criterion.cuda()
