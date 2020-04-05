@@ -96,7 +96,10 @@ class GUI(wx.Frame):
     def OnPressProcessBtn(self, event):
         selected_fa_files = [self.fa_list_box.GetString(e) for e in self.fa_list_box.GetSelections()]
         lexical = Scanner(selected_fa_files, self.input_box.GetValue())
-        tokens = lexical.analysis()
+        Tokens = lexical.analysis()
+        tokens = []
+        for token in Tokens:
+            tokens.append(token.__repr__())
         self.output_box.SetValue('\n'.join(tokens))
         output_fa_text = ""
         for dfa_name, dfa in lexical.dfas:

@@ -10,19 +10,24 @@ class DFA(object):
         species = data['F'][0].split(' ')
         self.F = {}
         for spec in species:
-            tmp = spec.split(":")
-            self.F[tmp[0]]=tmp[1]
+            tmp = spec.split(",")
+            if tmp[0] == 'comma':
+                tmp[0] = ','
+            self.F[tmp[0]] = tmp[1]
         tmp = ""
         for item in data['t']:
             tmp += item
         t = {}
-        for item in tmp.split('|'):
+        for item in tmp.split(' '):
             key, value = item.split(',')
             key = [key]
             if key[0] == 'digit':
                 key = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             if key[0] == 'letter':
                 key = [i for i in string.ascii_letters]
+            if key[0] == 'comma':
+                key = [',']
+                value = value[0] + ','
             for each_key in key:
                 t[value[0] + each_key] = value[1]
         self.t = t
@@ -30,17 +35,28 @@ class DFA(object):
     def scan(self, pos, content):
         re = ''
         now_state = self.q0
+        now_ch = content[pos]
+        length = len(content)
         while True:
-            now_ch = content[pos]
-            if self.t.get(now_state+now_ch, None) is None:
+            if self.t.get(now_state + now_ch, None) is not None:
+                now_state = self.t.get(now_state + now_ch)
+            elif self.t.get(now_state + 'exc*', None) is not None:
+                now_state = self.t.get(now_state + 'exc*')
+            else:
                 if now_state in self.F.keys():
                     return re, self.F.get(now_state), pos
                 else:
-                    return -1, now_state+now_ch, -1
+                    while pos < length:
+                        if content[pos] in (' ', '\t', '\n', '\r'):
+                            break
+                        pos += 1
+                    return -1, 'error', pos
+            re += now_ch
+            pos += 1
+            if pos == length:
+                now_ch = ''
             else:
-                now_state = self.t.get(now_state+now_ch)
-                re += now_ch
-                pos += 1
+                now_ch = content[pos]
 
     def get_list(self):
         re = []
@@ -62,10 +78,10 @@ class DFA(object):
     def __repr__(self):
         re = self.name + ":\n" + "s\\Q\t"
         for s in self.Q:
-            re += s+'\t'
+            re += s + '\t'
         re += '\n'
         for s in self.sigma:
-            re += s+'\t'
+            re += s + '\t'
             for to in self.Q:
                 tmp = to + s
                 if self.t.get(tmp, None) is None:
