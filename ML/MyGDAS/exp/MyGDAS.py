@@ -24,11 +24,9 @@ HAPT_SPACE = ['none', 'avg_pool_3x3', 'avg_pool_5x5', 'avg_pool_7x7', 'enhance_a
 
 
 def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimizer, print_frequency, epoch_str, logger):
-    batch_time = AverageMeter()
     base_losses, base_top1, base_top5 = AverageMeter(), AverageMeter(), AverageMeter()
     arch_losses, arch_top1, arch_top5 = AverageMeter(), AverageMeter(), AverageMeter()
     network.train()
-    end = time.time()
     for step, (X, Y, X1, Y1) in enumerate(data_loader):
         base_inputs, base_targets = X.cuda(), Y.cuda()
         arch_inputs, arch_targets = X1.cuda(), Y1.cuda()
@@ -57,16 +55,13 @@ def search(arch_config, data_loader, network, criterion, w_optimizer, a_optimize
         arch_top1.update(arch_prec1.item(), arch_inputs.size(0))
         arch_top5.update(arch_prec5.item(), arch_inputs.size(0))
 
-        batch_time.update(time.time() - end)
-        end = time.time()
         if step % print_frequency == 0 or step + 1 == len(data_loader):
             str1 = "SEARCHING***" + "[{:}][{:}/{:}]".format(epoch_str, step, len(data_loader))
-            str2 = "Time now step:{batch_time.val:.2f} avg:{batch_time.avg:.2f}".format(batch_time=batch_time)
             str3 = "Base [Loss {loss.val:.3f} ({loss.avg:.3f})  Prec@1 {top1.val:.2f} ({top1.avg:.2f}) Prec@5 {top5.val:.2f} ({top5.avg:.2f})]".format(
                 loss=base_losses, top1=base_top1, top5=base_top5)
             str4 = 'Arch [Loss {loss.val:.3f} ({loss.avg:.3f})  Prec@1 {top1.val:.2f} ({top1.avg:.2f}) Prec@5 {top5.val:.2f} ({top5.avg:.2f})]'.format(
                 loss=arch_losses, top1=arch_top1, top5=arch_top5)
-            logger.log(str1 + ' ' + str2 + ' ' + str3 + ' ' + str4)
+            logger.log(str1 + ' ' + str3 + ' ' + str4)
     return base_losses.avg, base_top1.avg, base_top5.avg, arch_losses.avg, arch_top1.avg, arch_top5.avg
 
 
@@ -99,7 +94,7 @@ def train(xargs):
     logger = prepare_logger(xargs)
     # get original data(cifar10/cifar100/uci)
     train_data, valid_data, xshape, class_num = get_dataset(xargs.dataset, xargs.data_path, -1)
-    logger.log('Train Config:')
+    logger.log('{:}Train Config{:}'.format("-"*50, "-"*50))
     opt_config = load_config(xargs.opt_config, {'class_num': class_num, 'xshape': xshape,
                                                 'batch_size': xargs.batch_size, 'epochs': xargs.epochs,
                                                 'LR': xargs.opt_learning_rate}, logger)
@@ -107,7 +102,7 @@ def train(xargs):
                                                             'config/', opt_config.batch_size, xargs.workers)
     logger.log('dataset: {:} Search-Loader-length={:}, batch size={:}'.format(xargs.dataset, len(search_loader),
                                                                               opt_config.batch_size))
-    logger.log('Arch Config:')
+    logger.log('{:}Arch Config{:}'.format("-"*50, "-"*50))
     arch_config = load_config(xargs.arch_config, {'class_num': class_num,
                                                   'space': HAPT_SPACE,
                                                   'affine': False,
@@ -124,8 +119,8 @@ def train(xargs):
         test_loader = valid_loader
         test(test_loader, network, arch_config.C_out)
         return
-    logger.log('search-model :\n{:}'.format(search_model))
-    logger.log('model-config : {:}'.format(arch_config))
+    # logger.log('search-model :\n{:}'.format(search_model))
+    logger.log('{:}model-config{:}\n{:}'.format("-"*50, "-"*50, arch_config))
     if opt_config.criterion == 'cross_entropy':
         criterion = nn.CrossEntropyLoss()
     else:
@@ -141,10 +136,10 @@ def train(xargs):
                                    lr=opt_config.LR,
                                    betas=(0.5, 0.999),
                                    weight_decay=opt_config.a_decay)
-    logger.log('w-optimizer : {:}'.format(w_optimizer))
-    logger.log('a-optimizer : {:}'.format(a_optimizer))
-    logger.log('w-scheduler : {:}'.format(w_scheduler))
-    logger.log('criterion   : {:}'.format(criterion))
+    logger.log('{:}w-optimizer{:}\n{:}'.format("-"*50, "-"*50, w_optimizer))
+    logger.log('{:}a-optimizer{:}\n{:}'.format("-"*50, "-"*50, a_optimizer))
+    logger.log('{:}w-scheduler{:}\n{:}'.format("-"*50, "-"*50, w_scheduler))
+    logger.log('{:}criterion{:}\n{:}'.format("-"*50, "-"*50, criterion))
     flop, param = get_model_infos(search_model, xshape)
     logger.log('FLOP = {:.6f} M, Params = {:.6f} MB'.format(flop, param))
     logger.log('search-space [{:} ops] : {:}'.format(len(HAPT_SPACE), HAPT_SPACE))
@@ -168,20 +163,21 @@ def train(xargs):
             "=> loading checkpoint of the last-info '{:}' start with {:}-th epoch.".format(last_info, start_epoch))
     else:
         logger.log("=> do not find the last-info file : {:}".format(last_info))
-        start_epoch, valid_accuracies, genotypes = 0, {'best': -1}, {
-            -1: network.genotype(xargs.save_dir + xargs.genotype_file)}
-    # start_time, search_time, epoch_time = time.time(), AverageMeter(), AverageMeter()
+        start_epoch, valid_accuracies, genotypes = 0, {'best': -1}, \
+                                                   {-1: network.genotype(xargs.save_dir + xargs.genotype_file)}
+    start_time, epoch_time = time.time(), AverageMeter()
     total_epoch = opt_config.epochs
     for epoch in range(start_epoch, total_epoch):
-        # w_scheduler.update(epoch, 0.0)
-        w_scheduler.step()
-        # need_time = 'Time Left: {:}'.format(convert_secs2time(epoch_time.val * (total_epoch - epoch), True))
+        w_scheduler.step(epoch=epoch)
+        need_time = 'Time Left: {:}'.format(convert_secs2time(epoch_time.avg * (total_epoch - epoch), True))
         epoch_str = '{:03d}-{:03d}'.format(epoch, total_epoch)
         network.set_tau(xargs.tau_max - (xargs.tau_max - xargs.tau_min) * epoch / (total_epoch - 1))
-        logger.log('\n[Search the {:}-th epoch] tau={:}'.format(epoch_str, network.get_tau()))
+        logger.log('\n[Search the {:}-th epoch] tau={:.2f} {:}'.format(epoch_str, network.get_tau(), need_time))
+        epoch_start = time.time()
         base_losses, base_top1, base_top5, arch_losses, arch_top1, arch_top5 = \
             search(arch_config, search_loader, network, criterion, w_optimizer, a_optimizer,
                    xargs.print_frequency, epoch_str, logger)
+        epoch_time.update(time.time() - epoch_start)
         logger.log('[{:}] searching : loss={:.2f}, accuracy@1={:.2f}%, accuracy@5={:.2f}%'.format(
             epoch_str, base_losses, base_top1, base_top5))
         logger.log(
@@ -214,8 +210,9 @@ def train(xargs):
             logger.log('<<<--->>> The {:}-th epoch : find the highest validation accuracy : {:.2f}%.'.format(epoch_str,
                                                                                                              arch_top1))
             copy_checkpoint(model_base_path, model_best_path, logger)
-        with torch.no_grad():
-            logger.log('{:}'.format(network.show_alphas()))
+            with torch.no_grad():
+                logger.log('{:}'.format(network.show_alphas()))
     logger.log('\n' + '-' * 100)
     # check the performance from the architecture dataset
-    logger.log('GDAS : run {:} epochs, last-geno is {:}.'.format(total_epoch, genotypes[total_epoch - 1]))
+    logger.log('GDAS : run {:} epochs, use time : {:}.'.format(total_epoch, convert_secs2time(time.time()-start_time, True)))
+    logger.log('best geno is {:}.'.format(genotypes['best']))

@@ -28,11 +28,11 @@ def evaluate(xargs):
     logger.log('Train Config:')
     eva_config = load_config(xargs.eva_config, {'class_num': class_num, 'xshape': xshape, 'tau_max': xargs.tau_max,
                                                 'tau_min': xargs.tau_min}, logger)
-    _, train_loader, test_loader = get_nas_search_loaders(train_data, valid_data, xargs.dataset,
+    search_loader, train_loader, test_loader = get_nas_search_loaders(train_data, valid_data, xargs.dataset,
                                                           'config/', eva_config.batch_size, xargs.workers)
     logger.log('dataset: {:} Train-Loader-length={:}, batch size={:}'.format(xargs.dataset, len(train_loader),
                                                                              eva_config.batch_size))
-    eva_dense_net(train_loader, test_loader, eva_config, logger, 'normal')
+    eva_dense_net(search_loader, test_loader, eva_config, logger, 'normal')
     # eva_dense_net(train_loader, test_loader, eva_config, logger, 'normal')
 
 
@@ -64,6 +64,7 @@ def eva_dense_net(train_loader, test_loader, config, logger, dense_type):
     model_base_path = logger.model_dir / 'seed-{:}-{:}-basic.pth'.format(logger.seed, dense_type)
     model_best_path = logger.model_dir / 'seed-{:}-{:}-best.pth'.format(logger.seed, dense_type)
     training_acc = {'best': -1}
+    start_time = time.time()
     for epoch in range(config.epochs):
         epoch_time = time.time()
         scheduler.step()
@@ -96,7 +97,7 @@ def eva_dense_net(train_loader, test_loader, config, logger, dense_type):
 def train(data_loader, network, criterion, optimizer, config):
     network.train()
     losses, top1, top5 = AverageMeter(), AverageMeter(), AverageMeter()
-    for step, (X, Y) in enumerate(data_loader):
+    for step, (X, Y, X1, Y1) in enumerate(data_loader):
         inputs, targets = X.cuda(), Y.cuda()
         optimizer.zero_grad()
         output = network(inputs)

@@ -2,7 +2,7 @@ import argparse
 import sys
 import random
 from pathlib import Path
-from model import MyGDAS, evaluate
+from exp import evaluate, MyGDAS
 
 if __name__ == '__main__':
     lib_dir = (Path(__file__).parent / '..' / '..' / 'lib').resolve()
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument("--eva_config", default='config/evaluate.config', type=str,
                         help='The path of the evaluate models\' configuration.')
     # architecture learning rate
-    parser.add_argument('--arch_learning_rate', type=float, default=0.003, help='learning rate for arch encoding')
+    parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
     parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
     parser.add_argument('--tau_min', type=float, default=0.1, help='The minimum tau for Gumbel')
     parser.add_argument('--tau_max', type=float, default=10, help='The maximum tau for Gumbel')
