@@ -100,7 +100,9 @@ def train(xargs):
     # get original data(cifar10/cifar100/uci)
     train_data, valid_data, xshape, class_num = get_dataset(xargs.dataset, xargs.data_path, -1)
     logger.log('Train Config:')
-    opt_config = load_config(xargs.opt_config, {'class_num': class_num, 'xshape': xshape}, logger)
+    opt_config = load_config(xargs.opt_config, {'class_num': class_num, 'xshape': xshape,
+                                                'batch_size': xargs.batch_size, 'epochs': xargs.epochs,
+                                                'LR': xargs.opt_learning_rate}, logger)
     search_loader, _, valid_loader = get_nas_search_loaders(train_data, valid_data, xargs.dataset,
                                                             'config/', opt_config.batch_size, xargs.workers)
     logger.log('dataset: {:} Search-Loader-length={:}, batch size={:}'.format(xargs.dataset, len(search_loader),
