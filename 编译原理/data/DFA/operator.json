@@ -7,5 +7,6 @@
   "F"     : ["+,加号 -,减号 *,乘号 /,除号 %,取模号 &,按位与 |,按位或 ~,按位非 !,逻辑非 <,小于号 >,大于号 =,赋值等于号 (,左括号 ),右括号 [,左中括号 ],右中括号 {,左花括号 },右花括号 comma,逗号 .,小数点 ;,分号 :,冒号 A,自增号 B,自减号 E,注释 F,小于等于号 G,左移 H,大于等于号 I,右移 J,逻辑与 K,逻辑或 L,不等号 M,逻辑等于号"],
   "t"     : ["+,S+ -,S- *,S* /,S/ %,S% &,S& |,S| ~,S~ !,S! <,S< >,S> =,S= (,S( ),S) [,S[ ],S] {,S{ },S} comma,Scomma .,S. ;,S; :,S: ",
              "+,+A -,-B =,<F <,<G =,>H >,>I &,&J |,|K =,!L =,=M ",
-             "*,/C exc*,CC *,CD /,DE *,DD exc*,DC"]
+             "*,/C exc*,CC *,CD /,DE *,DD exc*,DC"],
+  "error" : ["C:Comment statement error.;D:Comment statement error."]
 }

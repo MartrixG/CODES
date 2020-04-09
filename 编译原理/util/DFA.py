@@ -9,6 +9,7 @@ class DFA(object):
         self.q0 = data['q0'][0]
         species = data['F'][0].split(' ')
         self.F = {}
+        self.error = {}
         for spec in species:
             tmp = spec.split(",")
             if tmp[0] == 'comma':
@@ -30,33 +31,30 @@ class DFA(object):
                 value = value[0] + ','
             for each_key in key:
                 t[value[0] + each_key] = value[1]
+        for error in data['error'][0].split(';'):
+            state, statement = error.split(':')
+            self.error[state] = statement
         self.t = t
 
-    def scan(self, pos, content):
+    def scan(self, src_code):
         re = ''
         now_state = self.q0
-        now_ch = content[pos]
-        length = len(content)
+        now_ch = src_code.get_now()
         while True:
             if self.t.get(now_state + now_ch, None) is not None:
                 now_state = self.t.get(now_state + now_ch)
-            elif self.t.get(now_state + 'exc*', None) is not None:
+            elif self.t.get(now_state + 'exc*', None) is not None and now_ch != '*':
                 now_state = self.t.get(now_state + 'exc*')
+            elif now_state in self.F.keys():
+                return re, self.F.get(now_state)
             else:
-                if now_state in self.F.keys():
-                    return re, self.F.get(now_state), pos
-                else:
-                    while pos < length:
-                        if content[pos] in (' ', '\t', '\n', '\r'):
-                            break
-                        pos += 1
-                    return -1, 'error', pos
+                while src_code.has_next():
+                    if src_code.get_now() not in (string.ascii_letters, '_', string.digits):
+                        break
+                    re += src_code.get_next()
+                return -1, self.error[now_state] + "at " + src_code.get_pos(len(re)) + "."
             re += now_ch
-            pos += 1
-            if pos == length:
-                now_ch = ''
-            else:
-                now_ch = content[pos]
+            now_ch = src_code.get_next()
 
     def get_list(self):
         re = []
