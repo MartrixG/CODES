@@ -32,6 +32,7 @@ class Scanner(object):
 
     def analysis(self):
         token = []
+        error = []
         src_code = self.code
         while src_code.has_next():
             now_ch = src_code.get_now()
@@ -49,5 +50,5 @@ class Scanner(object):
             if re != -1:
                 token.append(Token(re, spec))
             else:
-                print(spec)
-        return token
+                error.append(Token(spec, 'error'))
+        return token, error

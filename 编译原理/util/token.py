@@ -2,7 +2,9 @@ class Token(object):
     def __init__(self, symbol, spec):
         self.symbol = symbol
         self.spec = spec
-        if spec == 'const':
+        if spec == 'error':
+            self.value = symbol
+        elif spec == 'const':
             self.value = int(symbol)
         elif spec == 'OCT':
             self.value = oct(int(symbol, base=8))

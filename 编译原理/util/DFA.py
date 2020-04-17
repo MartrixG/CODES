@@ -13,7 +13,7 @@ class DFA(object):
         for spec in species:
             tmp = spec.split(",")
             if tmp[0] == 'comma':
-                tmp[0] = ','
+                tmp[0] = tmp[1] = ','
             self.F[tmp[0]] = tmp[1]
         tmp = ""
         for item in data['t']:

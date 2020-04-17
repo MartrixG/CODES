@@ -2,7 +2,7 @@ import os
 import wx
 import json
 from tabulate import tabulate
-from lexical_analysis import Scanner
+from complier.lexical_analysis import Scanner
 
 
 class GUI(wx.Frame):
