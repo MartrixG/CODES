@@ -21,3 +21,8 @@ class element(object):
 
     def __hash__(self):
         return hash(self.name + " " + self.type)
+
+    def __lt__(self, other):
+        if self.type != other.type:
+            return self.type == 'VT'
+        return self.name.lower() < other.name.lower()

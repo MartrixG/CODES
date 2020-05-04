@@ -46,13 +46,13 @@ class DFA(object):
             elif self.t.get(now_state + 'exc*', None) is not None and now_ch != '*':
                 now_state = self.t.get(now_state + 'exc*')
             elif now_state in self.F.keys():
-                return re, self.F.get(now_state)
+                return re, self.F.get(now_state), src_code.line
             else:
                 while src_code.has_next():
                     if src_code.get_now() not in (string.ascii_letters, '_', string.digits):
                         break
                     re += src_code.get_next()
-                return -1, self.error[now_state] + "at " + src_code.get_pos(len(re)) + "."
+                return -1, self.error[now_state] + "at " + src_code.get_pos(len(re)) + ".", src_code.line
             re += now_ch
             now_ch = src_code.get_next()
 

@@ -1,16 +1,22 @@
 import json
-
+from collections import OrderedDict
+from collections import defaultdict
+from util.token import Token
 from util.element import element
 from util.produnction import make_production, make_item, recover_item
+from util.tree import prepare_tree
+from tabulate import tabulate
 
 EPSILON = element('#')
 DOLLAR = element('$')
 
+def return_empty_str():
+    return ''
 
 class LR(object):
     def __init__(self, path):
         self.all_prod = []
-        self.closures = {}
+        self.closures = OrderedDict()
         self.alphabet = set()
         self.first = {}
         self.producers = {}
@@ -32,8 +38,11 @@ class LR(object):
                 self.producers[prod.left] = set()
             self.producers[prod.left].add(prod)
         self.alphabet.add(DOLLAR)
+        self.alphabet_list = sorted(list(self.alphabet))
+        self.alphabet_str_list = [str(e) for e in self.alphabet_list]
         self.init_first()
         self.init_closure()
+        self.all_prod_str = [str(e) for e in self.all_prod]
         self.init_goto_action()
 
     def get_closure(self, start_I):
@@ -77,31 +86,6 @@ class LR(object):
                 next_closure.add(tmp_item)
         return self.get_closure(list(next_closure))
 
-    def init_goto_action(self):
-        for prod in self.producers[self.start]:
-            start_prod = prod
-        self.goto = {}
-        self.action = {}
-        for state in self.closures:
-            self.goto[state] = {}
-            self.action[state] = {}
-            for ele in self.alphabet:
-                if ele.type == 'VN':
-                    tmp_goto = self.go(state, ele)
-                    if tmp_goto in self.closures:
-                        self.goto[state][ele] = tmp_goto
-            for prod in state:
-                if prod.dot_pos >= len(prod.right):
-                    self.action[state][prod.forward] = ('r', recover_item(prod))
-                else:
-                    a = prod.right[prod.dot_pos]
-                    if a == EPSILON:
-                        raise Exception("创建goto转移表时出现空产生式错误")
-                    if a.type == 'VT':
-                        self.action[state][a] = ('s', self.go(state, a))
-                if start_prod.product_eq(prod) and prod.dot_pos == 1 and prod.forward == DOLLAR:
-                    self.action[state][DOLLAR] = ('acc', 0)
-
     def init_closure(self):
         for prod in self.producers[self.start]:
             start_prod = prod
@@ -120,6 +104,46 @@ class LR(object):
             else:
                 for d in D:
                     self.closures[d] = len(self.closures)
+                    
+    def init_goto_action(self):
+        for prod in self.producers[self.start]:
+            start_prod = prod
+        self.goto = {}
+        self.action = {}
+        self.states = list(self.closures.keys())
+        for state_idx, state in enumerate(self.closures):
+            self.goto[state_idx] = defaultdict(return_empty_str)
+            self.action[state_idx] = defaultdict(return_empty_str)
+            for ele in self.alphabet:
+                if ele.type == 'VN':
+                    tmp_goto = self.go(state, ele)
+                    if tmp_goto in self.closures:
+                        try:
+                            goto_state_idx = self.states.index(tmp_goto)
+                            self.goto[state_idx][ele] = 's_{}'.format(goto_state_idx)
+                        except ValueError:
+                            raise ValueError("Cannot find a state for goto")
+            for prod in state:
+                if prod.dot_pos >= len(prod.right):
+                    recover_i = recover_item(prod)
+                    try:
+                        product_idx = self.all_prod_str.index(str(recover_i))
+                        self.action[state_idx][prod.forward] = 'r_{}'.format(product_idx)
+                    except ValueError:
+                        raise ValueError("Cannot find a product for reduce")
+                else:
+                    a = prod.right[prod.dot_pos]
+                    if a == EPSILON:
+                        raise Exception("创建goto转移表时出现空产生式错误")
+                    if a.type == 'VT':
+                        goto_state = self.go(state, a)
+                        try:
+                            goto_state_idx = self.states.index(goto_state)
+                            self.action[state_idx][a] = 's_{}'.format(goto_state_idx)
+                        except ValueError:
+                            raise ValueError("Cannot find a state for goto")
+                if start_prod.product_eq(prod) and prod.dot_pos == 1 and prod.forward == DOLLAR:
+                    self.action[state_idx][DOLLAR] = 'acc_0'
 
     def get_first(self, prod):
         first_set = set()
@@ -160,18 +184,131 @@ class LR(object):
             print(elements)
 
     def print_first(self):
+        result = []
         for ele in self.alphabet:
             if ele.type == 'VN':
-                print(ele, self.first[ele])
+                result.append('{} {}'.format(ele, self.first[ele]))
+        return '\n'.join(result)
 
     def print_closure(self):
+        result = []
         for item in self.closures.keys():
-            print(self.closures[item])
-            print('-' * 30)
+            result.append(str(self.closures[item]))
+            result.append('-' * 30)
             for prod in item:
+                result.append(str(prod))
+        return '\n'.join(result)
+    
+    def print_action_goto(self):
+        result = []
+        # table head
+        result.append([str(e) for e in self.alphabet_list])
+        # table body
+        for state_idx in range(len(self.states)):
+            r = []
+            r.append(state_idx)
+            for alpha in self.alphabet_list:
+                if alpha.type == 'VT':
+                    r.append(self.action[state_idx][alpha])
+                else:
+                    r.append(self.goto[state_idx][alpha])
+            result.append(r)
+        return tabulate(result[1:], result[0], tablefmt="grid")
+
+    def analysis(self, tokens, debug=False):
+        from copy import deepcopy
+        _tokens = deepcopy(tokens)
+        _tokens.append(Token('$', '_', tokens[-1].line))
+        _token_list = [e.spec.upper() + '_vt' for e in tokens] + ['$_vt']
+        token_list = []
+        for e in _token_list:
+            if e not in self.alphabet_str_list:
+                raise ValueError("Cannot find spec '{}' in '{}'".format(e, self.alphabet_str_list))
+            token_list.append(self.alphabet_list[self.alphabet_str_list.index(e)])
+        state_stack = [0]
+        prod_stack = ['$_vt']
+        input_idx = 0
+        flag = 0
+        prods_used = []
+        state_list = []
+        reduce_list = []
+        while True:
+            current_state = state_stack[-1]
+            current_token = token_list[input_idx]
+            current_action = self.action[current_state][current_token]
+            _t = _tokens[input_idx]
+            if current_action.startswith('s_'):
+                # if debug:
+                #     print('> state --')
+                #     print("Current STATES:", state_stack)
+                #     print("Current PRODS:", prod_stack)
+                #     print("Current Input:", token_list[input_idx:])
+                next_state = int(current_action[2:])
+                state_stack.append(next_state)
+                prod_stack.append(str(current_token))
+                input_idx += 1
+                state_list.append(_t)
+                # if debug:
+                #     print('< state --')
+                #     print("Current STATES:", state_stack)
+                #     print("Current PRODS:", prod_stack)
+                #     print("Current Input:", token_list[input_idx:])
+            elif current_action.startswith('r_'):
+                prod_idx = int(current_action[2:])
+                prod_to_use = self.all_prod[prod_idx]
+                pop_num = len(prod_to_use.right) if prod_to_use.right[0].type != 'epsilon' else 0
+                reduce_list.append(_t)
+                # if debug:
+                #     print("> reduce --")
+                #     print("Current STATES:", state_stack)
+                #     print("Current PRODS:", prod_stack)
+                #     print("Current Input:", token_list[input_idx:])
+                #     print("Use Product:", prod_to_use)
+                #     print("We want to pop {} items".format(pop_num))
+                prods_used.append(prod_to_use)
+                for _ in range(pop_num):
+                    state_stack.pop()
+                    prod_stack.pop()
+                left = str(prod_to_use.left)
+                prod_stack.append(left)
+                # if debug:
+                #     print("- reduce --")
+                #     print("Current STATES:", state_stack)
+                #     print("Current PRODS:", prod_stack)
+                #     print("Current Input:", token_list[input_idx:])
+                try:
+                    alpha = self.alphabet_list[self.alphabet_str_list.index(prod_stack[-1])]
+                    goto_state = int(self.goto[state_stack[-1]][alpha][2:])
+                    state_stack.append(goto_state)
+                except ValueError:
+                    print("ERROR: cannot find a goto")
+                    flag = 2
+                    break
+                # if debug:
+                #     print("< reduce --")
+                #     print("add state: {}".format(goto_state))
+                #     print("Current STATES:", state_stack)
+                #     print("Current PRODS:", prod_stack)
+                #     print("Current Input:", token_list[input_idx:])
+            elif current_action.startswith('acc'):
+                flag = 1
+                break
+            else:
+                flag = 2
+                break
+        if flag == 1:
+            print("Success")
+            print("++++++++++++++++++++++++++++++")
+            for prod in prods_used:
                 print(prod)
-
-
-if __name__ == '__main__':
-    grammar_lr = LR('../data/grammar/c_style.json')
-    grammar_lr.print_closure()
+            print("++++++++++++++++++++++++++++++")
+            return 0, prepare_tree(prods_used, tokens), '\n'.join([str(e) for e in prods_used])
+        elif flag == 2:
+            if len(reduce_list) > 0:
+                prompt = "Error at Line [{}] near token [{}]".format(reduce_list[-1].line, reduce_list[-1])
+            else:
+                prompt = "Error at Line [{}] near token [{}]".format(state_list[-1].line, state_list[-1])
+            print(prompt)
+            return 1, prompt, "None"
+        else:
+            return 2, 'unknown error', "None"

@@ -1,7 +1,8 @@
 class Token(object):
-    def __init__(self, symbol, spec):
+    def __init__(self, symbol, spec, line):
         self.symbol = symbol
         self.spec = spec
+        self.line = line
         if spec == 'error':
             self.value = symbol
         elif spec == 'const':
@@ -24,7 +25,7 @@ class Token(object):
         return self.value
 
     def __repr__(self):
-        return "{:}\t\t< {:} , {:} >".format(self.symbol, self.spec.upper(), self.value)
+        return "{:}  < {:}, {:}, {} >".format(self.symbol, self.spec.upper(), self.value, self.line)
 
     def __str__(self):
-        return "{:}\t\t< {:} , {:} >".format(self.symbol, self.spec.upper(), self.value)
+        return "{:}  < {:}, {:}, {} >".format(self.symbol, self.spec.upper(), self.value, self.line)

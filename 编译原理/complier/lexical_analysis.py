@@ -40,15 +40,15 @@ class Scanner(object):
                 src_code.get_next()
                 continue
             elif '0' <= now_ch <= '9':
-                re, spec = self.numDFA.scan(src_code)
+                re, spec, line = self.numDFA.scan(src_code)
             elif now_ch in self.opDFA.F.keys():
-                re, spec = self.opDFA.scan(src_code)
+                re, spec, line = self.opDFA.scan(src_code)
             elif now_ch.isalpha() or now_ch == '_':
-                re, spec = self.idnDFA.scan(src_code)
+                re, spec, line = self.idnDFA.scan(src_code)
                 if re in self.keyWord:
                     spec = re.upper()
             if re != -1:
-                token.append(Token(re, spec))
+                token.append(Token(re, spec, line))
             else:
-                error.append(Token(spec, 'error'))
+                error.append(Token(spec, 'error', line))
         return token, error
