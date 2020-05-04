@@ -2,7 +2,7 @@ import argparse
 import sys
 import random
 from pathlib import Path
-from exp import evaluate, MyGDAS
+from exp import evaluate, MyGDAS, re_train
 
 if __name__ == '__main__':
     lib_dir = (Path(__file__).parent / '..' / '..' / 'lib').resolve()
@@ -49,5 +49,7 @@ if __name__ == '__main__':
         args.rand_seed = random.randint(1, 100000)
     if args.evaluate == 'evaluate':
         evaluate.evaluate(args)
+    elif args.evaluate == 'retrain':
+        re_train.train(args)
     else:
         MyGDAS.train(args)

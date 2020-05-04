@@ -133,7 +133,7 @@ def train(xargs):
                                                              T_max=opt_config.epochs,
                                                              eta_min=opt_config.eta_min)
     a_optimizer = torch.optim.Adam(params=search_model.get_alphas(),
-                                   lr=opt_config.LR,
+                                   lr=xargs.arch_learning_rate,
                                    betas=(0.5, 0.999),
                                    weight_decay=opt_config.a_decay)
     logger.log('{:}w-optimizer{:}\n{:}'.format("-"*50, "-"*50, w_optimizer))
