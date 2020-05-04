@@ -16,3 +16,4 @@ cache/
 /tmp_test
 *.pth
 *.zip
+/database/BufMgr/docs/*
