@@ -17,3 +17,4 @@ cache/
 *.pth
 *.zip
 /database/BufMgr/docs/*
+log/
