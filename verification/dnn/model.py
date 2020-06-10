@@ -66,15 +66,14 @@ class cross_classifier(nn.Module):
         self.blocks = nn.ModuleDict()
         self.fully_cross = args.fully_cross
         self.hidden_layers = args.hidden_layers
-        c_prev = c_in
-        c_curr = args.first_neurons
+        out = {0: c_in}
+        for i in range(1, self.hidden_layers + 1):
+            out[i] = args.first_neurons
         for i in range(1, self.hidden_layers + 1):
             for j in range(i):
                 edge = str(j) + '->' + str(i)
-                self.blocks[edge] = classify_opt.OPS['dense_layer'](c_prev, c_curr, track_running_stats)
-                c_prev = c_curr
-                c_curr = int(c_curr * args.change)
-        self.linear = nn.Linear(c_in, c_out)
+                self.blocks[edge] = classify_opt.OPS['dense_layer'](out[j], out[i], track_running_stats)
+        self.linear = nn.Linear(args.first_neurons, c_out)
 
     def forward(self, feature):
         blocks = [feature]
