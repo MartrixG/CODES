@@ -32,7 +32,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--epochs', type=int, default=1000, help='num of training epochs')
 parser.add_argument('--report_freq', type=float, default=20, help='report frequency')
-parser.add_argument('--seed', type=int, default=1, help='random seed')
+parser.add_argument('--seed', type=int, default=0, help='random seed')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
 # classifier params
@@ -46,7 +46,7 @@ parser.add_argument('--activate_func', type=str, default='relu', choices=['relu'
 parser.add_argument('--opt', type=str, default='dense_layer',
                     choices=['dense_layer', 'avg_pool', 'enhance_avg_pool', 'group_dense', 'enhance_group_dense'],
                     help='Types of operations between layers')
-parser.add_argument('--cross_link', type=bool, default=True, choices=[False, True],
+parser.add_argument('--cross_link', type=bool, default=False, choices=[False, True],
                     help='Whether to use cross-layer links')
 parser.add_argument('--fully_cross', type=bool, default=False, choices=[False, True],
                     help='Whether to use cross-layer links')
@@ -61,6 +61,7 @@ def main(arg):
     global args
     args = SimpleNamespace(**parse)
     '''
+    print('seed:{:}'.format(args.seed))
     print('c_in:{:}'.format(args.c_in))
     print('c_out:{:}'.format(args.c_out))
     print('dataset:{:}'.format(args.dataset))
@@ -70,7 +71,7 @@ def main(arg):
     print('activate_func:{:}'.format(args.activate_func))
     print('cross_link:{:}'.format(args.cross_link))
     print('fully_cross:{:}'.format(args.fully_cross))
-    print('\n')
+    print()
     exit(0)
     '''
     ##################################

@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-default = {'hidden_layers': '3', 'first_neurons': '520', 'change': '1', 'activate_func': 'relu', 'opt': 'dense_layer'}
+default = {'hidden_layers': '3', 'first_neurons': '561', 'change': '1', 'activate_func': 'relu', 'opt': 'dense_layer'}
 
 
 def get_file_name(lines):
@@ -25,6 +25,7 @@ def get_file_name(lines):
                 flag = 1
                 continue
         if flag == 1:
+            tmp = line.split(':')[-1].strip()
             if line.find('fully_cross') != -1 and tmp == 'True':
                 return 'fully_cross'
             else:
@@ -72,6 +73,7 @@ def ana():
             plt.legend([l1, l2], ['train_acc', 'valid_acc'], loc='upper right')
             # plt.ylim(0, 0.1)
             max_acc_x, max_acc_y = np.argmin(valid), np.min(valid)
+            # max_acc_y = valid[-1]
             plt.annotate('epoch:{:}\nerr:{:.2f}%'.format(max_acc_x, max_acc_y*100),
                          xy=(max_acc_x, max_acc_y), xytext=(max_acc_x-5, max_acc_y-0.01),
                          arrowprops=dict(arrowstyle="->", connectionstyle="arc3"))

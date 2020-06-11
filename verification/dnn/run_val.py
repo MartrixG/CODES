@@ -29,12 +29,6 @@ def get_process(opt, dataset, m, n):
                 arg['first_neurons'] = m
             process_list.append(Process(target=main, args=(arg,)))
             all_arg.append(arg)
-            if count_p(process_list) >= 5:
-                while True:
-                    time.sleep(1)
-                    if count_p(process_list) < 5:
-                        break
-
     return process_list, all_arg
 
 
@@ -57,7 +51,7 @@ def get_mn(dataset):
         n = 12
     elif dataset == 'UJI':
         m = 520
-        n = 12
+        n = 5
     else:
         raise ValueError
     return m, n
@@ -97,14 +91,25 @@ def first_neurons_train(dataset):
 
 def cross_hidden_train(dataset):
     m, n = get_mn(dataset)
-    hidden_layers = [3, 5, 7, 9]
+    hidden_layers = [2, 3, 4, 5, 6, 7, 8, 9, 10]
     opt = {'hidden_layers': hidden_layers}
     return get_process(opt, dataset, m, n)
 
 
+def hidden_train(dataset):
+    m, n = get_mn(dataset)
+    hidden_layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    opt = {'hidden_layers': hidden_layers}
+    return get_process(opt, dataset, m, n)
+
+
+def cross_seed(dataset):
+    m, n = get_mn(dataset)
+    seed = [0, 1, 2, 3, 4]
+    opt = {'seed': seed}
+    return get_process(opt, dataset, m, n)
+
+
 if __name__ == '__main__':
-    process, args = cross_hidden_train('HAPT')
-    # for arg in args:
-    #     print(arg)
-    # print(len(args))
+    process, args = hidden_train('UJI')
     run_process(process, 7)
