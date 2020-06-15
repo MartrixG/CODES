@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-default = {'hidden_layers': '3', 'first_neurons': '561', 'change': '1', 'activate_func': 'relu', 'opt': 'dense_layer'}
+default = {'hidden_layers': '3', 'first_neurons': ['561', '520', '280', '260'], 'change': '1', 'activate_func': 'relu', 'opt': 'dense_layer'}
 
 
 def get_file_name(lines):
@@ -13,7 +13,7 @@ def get_file_name(lines):
             tmp = line.split(':')[-1].strip()
             if line.find('hidden_layers') != -1 and tmp != default['hidden_layers']:
                 return 'hidden_layers_' + tmp
-            if line.find('first_neurons') != -1 and tmp != default['first_neurons']:
+            if line.find('first_neurons') != -1 and tmp not in default['first_neurons']:
                 return 'first_neurons_' + tmp
             if line.find('change') != -1 and tmp != default['change']:
                 return 'change_' + tmp

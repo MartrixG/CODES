@@ -72,8 +72,25 @@ class cross_classifier(nn.Module):
         for i in range(1, self.hidden_layers + 1):
             for j in range(i):
                 edge = str(j) + '->' + str(i)
-                self.blocks[edge] = classify_opt.OPS['dense_layer'](out[j], out[i], track_running_stats)
+                self.blocks[edge] = nn.Sequential(
+                    classify_opt.OPS['dense_layer'](out[j], out[i], track_running_stats),
+                    self.activate(args.activate_func)
+                )
         self.linear = nn.Linear(args.first_neurons, c_out)
+        self.linears = nn.ModuleList()
+        if self.fully_cross:
+            self.linears.append(nn.Linear(c_in, c_out))
+            self.linears.append(nn.Linear(args.first_neurons, c_out))
+            self.linears.append(nn.Linear(args.first_neurons, c_out))
+            self.linears.append(nn.Linear(args.first_neurons, c_out))
+
+    def activate(self, func_name):
+        if func_name == 'relu':
+            return nn.ReLU(inplace=True)
+        elif func_name == 'tanh':
+            return nn.Tanh()
+        else:
+            return nn.Sigmoid()
 
     def forward(self, feature):
         blocks = [feature]
@@ -85,8 +102,8 @@ class cross_classifier(nn.Module):
             blocks.append(sum(c_list))
         if self.fully_cross:
             c_list = []
-            for block in blocks:
-                c_list.append(self.linear(block.view(block.size(0), -1)))
+            for i in range(blocks.__len__()):
+                c_list.append(self.linears[i](blocks[i].view(blocks[i].size(0), -1)))
             out = sum(c_list)
         else:
             out = blocks[-1].view(blocks[-1].size(0), -1)

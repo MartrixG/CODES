@@ -26,7 +26,7 @@ def get_process(opt, dataset, m, n):
         for j in opt[key]:
             arg = {key: j, 'c_in': m, 'c_out': n, 'dataset': dataset}
             if arg.__contains__('first_neurons') is False:
-                arg['first_neurons'] = m
+                arg['first_neurons'] = m // 2
             process_list.append(Process(target=main, args=(arg,)))
             all_arg.append(arg)
     return process_list, all_arg
@@ -111,5 +111,5 @@ def cross_seed(dataset):
 
 
 if __name__ == '__main__':
-    process, args = hidden_train('UJI')
-    run_process(process, 7)
+    process, args = cross_hidden_train('HAPT')
+    run_process(process, 5)

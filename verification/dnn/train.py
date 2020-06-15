@@ -46,9 +46,9 @@ parser.add_argument('--activate_func', type=str, default='relu', choices=['relu'
 parser.add_argument('--opt', type=str, default='dense_layer',
                     choices=['dense_layer', 'avg_pool', 'enhance_avg_pool', 'group_dense', 'enhance_group_dense'],
                     help='Types of operations between layers')
-parser.add_argument('--cross_link', type=bool, default=False, choices=[False, True],
+parser.add_argument('--cross_link', type=bool, default=True, choices=[False, True],
                     help='Whether to use cross-layer links')
-parser.add_argument('--fully_cross', type=bool, default=False, choices=[False, True],
+parser.add_argument('--fully_cross', type=bool, default=True, choices=[False, True],
                     help='Whether to use cross-layer links')
 
 parse = vars(parser.parse_args())
@@ -62,13 +62,9 @@ def main(arg):
     args = SimpleNamespace(**parse)
     '''
     print('seed:{:}'.format(args.seed))
-    print('c_in:{:}'.format(args.c_in))
-    print('c_out:{:}'.format(args.c_out))
     print('dataset:{:}'.format(args.dataset))
     print('hidden_layers:{:}'.format(args.hidden_layers))
     print('first_neurons:{:}'.format(args.first_neurons))
-    print('change:{:}'.format(args.change))
-    print('activate_func:{:}'.format(args.activate_func))
     print('cross_link:{:}'.format(args.cross_link))
     print('fully_cross:{:}'.format(args.fully_cross))
     print()

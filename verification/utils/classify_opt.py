@@ -11,6 +11,7 @@ OPS = {
     'enhance_group_dense': lambda C_in, C_out, track_running_stats: EnhanceGroupDENSE(C_in, C_out, 3,
                                                                                       track_running_stats),
     'dense_layer': lambda C_in, C_out, track_running_stats: DenseLayer(C_in, C_out, track_running_stats),
+    'linear': lambda C_in, C_out: LinearLayer(C_in, C_out)
 }
 
 
@@ -147,6 +148,16 @@ class DenseLayer(nn.Module):
         )
         self.out_dim = (C_in + 1) // 2
         self.C_out = C_out
+
+    def forward(self, x):
+        x = self.op(x)
+        return x
+
+
+class LinearLayer(nn.Module):
+    def __init__(self, c_in, c_out):
+        super(LinearLayer, self).__init__()
+        self.op = nn.Linear(c_in, c_out)
 
     def forward(self, x):
         x = self.op(x)
