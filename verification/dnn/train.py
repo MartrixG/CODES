@@ -48,7 +48,7 @@ parser.add_argument('--opt', type=str, default='dense_layer',
                     help='Types of operations between layers')
 parser.add_argument('--cross_link', type=bool, default=True, choices=[False, True],
                     help='Whether to use cross-layer links')
-parser.add_argument('--fully_cross', type=bool, default=True, choices=[False, True],
+parser.add_argument('--fully_cross', type=bool, default=False, choices=[False, True],
                     help='Whether to use cross-layer links')
 
 parse = vars(parser.parse_args())

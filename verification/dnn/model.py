@@ -77,12 +77,11 @@ class cross_classifier(nn.Module):
                     self.activate(args.activate_func)
                 )
         self.linear = nn.Linear(args.first_neurons, c_out)
-        self.linears = nn.ModuleList()
         if self.fully_cross:
+            self.linears = nn.ModuleList()
             self.linears.append(nn.Linear(c_in, c_out))
-            self.linears.append(nn.Linear(args.first_neurons, c_out))
-            self.linears.append(nn.Linear(args.first_neurons, c_out))
-            self.linears.append(nn.Linear(args.first_neurons, c_out))
+            for i in range(args.hidden_layers):
+                self.linears.append(nn.Linear(args.first_neurons, c_out))
 
     def activate(self, func_name):
         if func_name == 'relu':
@@ -99,12 +98,12 @@ class cross_classifier(nn.Module):
             for j in range(i):
                 edge = str(j) + '->' + str(i)
                 c_list.append(self.blocks[edge](blocks[j]))
-            blocks.append(sum(c_list))
+            blocks.append(sum(c_list) / c_list.__len__())
         if self.fully_cross:
             c_list = []
             for i in range(blocks.__len__()):
                 c_list.append(self.linears[i](blocks[i].view(blocks[i].size(0), -1)))
-            out = sum(c_list)
+            out = sum(c_list) / c_list.__len__()
         else:
             out = blocks[-1].view(blocks[-1].size(0), -1)
             out = self.linear(out)
