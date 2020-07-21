@@ -18,3 +18,4 @@ cache/
 *.zip
 /database/BufMgr/docs/*
 log/
+report/
