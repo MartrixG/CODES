@@ -119,11 +119,11 @@ class NetworkCIFAR(nn.Module):
             self.auxiliary_head = AuxiliaryHeadCIFAR(C_to_auxiliary, num_classes)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         # self.classifier = nn.Linear(C_prev, num_classes)
-        if args.cross_link:
-            self.classifier = nn.ModuleList([cross_classifier(C_prev, num_classes)])
-        else:
-            self.classifier = nn.ModuleList([classifier(C_prev, num_classes, args)])
-        logging.info('classifier:\n{:}'.format(self.classifier))
+        # if args.cross_link:
+        #     self.classifier = nn.ModuleList([cross_classifier(C_prev, num_classes)])
+        # else:
+        #     self.classifier = nn.ModuleList([classifier(C_prev, num_classes, args)])
+        # logging.info('classifier:\n{:}'.format(self.classifier))
 
     def forward(self, feature):
         logits_aux = None

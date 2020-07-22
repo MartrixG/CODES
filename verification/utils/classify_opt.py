@@ -24,7 +24,7 @@ class AvgPOOLING(nn.Module):
         elif kernel_size == 5:
             padding = (0, 2)
             kernel_size = (1, 5)
-        elif kernel_size == 5:
+        elif kernel_size == 7:
             padding = (0, 3)
             kernel_size = (1, 7)
         else:
