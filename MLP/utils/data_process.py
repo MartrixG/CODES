@@ -160,24 +160,24 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
         valid_data = deepcopy(train_data)
         search_data = SearchDataset(name, train_data, train_split, valid_split)
         search_loader = DataLoader(search_data,
-                                   batch_size=search_data.__len__(),
+                                   batch_size=batch_size,
                                    shuffle=True,
                                    num_workers=workers,
                                    pin_memory=True)
         train_loader = DataLoader(NormalDataset(name, train_data),
-                                  batch_size=len(train_split),
+                                  batch_size=batch_size,
                                   sampler=torch.utils.data.sampler.SubsetRandomSampler(train_split),
                                   num_workers=workers,
                                   pin_memory=True
                                   )
         valid_loader = DataLoader(NormalDataset(name, valid_data),
-                                 batch_size=len(valid_split),
+                                 batch_size=batch_size,
                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(valid_split),
                                  num_workers=workers,
                                  pin_memory=True
                                  )
         test_loader = DataLoader(NormalDataset(name, test_data),
-                                 batch_size=len(test_data),
+                                 batch_size=batch_size,
                                  shuffle=True,
                                  num_workers=workers,
                                  pin_memory=True

@@ -15,7 +15,9 @@ OPS = {
     'group_dense_4_sigmoid': lambda C_in, C_out: GroupDenseSigmoid(C_in, C_out, 4),
     'group_dense_4_tanh': lambda C_in, C_out: GroupDenseTanh(C_in, C_out, 4),
     # noe                    (1)
-    'none': lambda C_in, C_out: Zero(C_in, C_out)
+    'none': lambda C_in, C_out: Zero(C_in, C_out),
+
+    'ReLUConvBN': lambda C_in, C_out: ReLUConvBN(C_in, C_out)
 }
 
 
@@ -28,7 +30,7 @@ class MaxPOOLING(nn.Module):
             stride = (1, 2)
         else:
             raise ValueError("C_in : {:} and C_out : {:} not match.".format(C_in, C_out))
-        self.op = nn.MaxPool2d((1, 3), stride=stride, padding=0)
+        self.op = nn.MaxPool2d((1, 3), stride=stride, padding=(0, 1))
 
     def forward(self, x):
         x = x.reshape(x.size(0), 1, 1, x.size(1))
@@ -46,7 +48,7 @@ class AvgPOOLING(nn.Module):
             stride = (1, 2)
         else:
             raise ValueError("C_in : {:} and C_out : {:} not match.".format(C_in, C_out))
-        self.op = nn.AvgPool2d((1, 3), stride=stride, padding=0, count_include_pad=False)
+        self.op = nn.AvgPool2d((1, 3), stride=stride, padding=(0, 1), count_include_pad=False)
 
     def forward(self, x):
         x = x.reshape(x.size(0), 1, 1, x.size(1))
@@ -156,3 +158,17 @@ class Zero(nn.Module):
         shape[1] = self.C_out
         zeros = x.new_zeros(shape, dtype=x.dtype, device=x.device)
         return zeros
+
+
+class ReLUConvBN(nn.Module):
+
+    def __init__(self, C_in, C_out):
+        super(ReLUConvBN, self).__init__()
+        self.op = nn.Sequential(
+            nn.ReLU(inplace=False),
+            nn.Conv2d(C_in, C_out, kernel_size=(1, 1), bias=False),
+            nn.BatchNorm2d(C_out, affine=True, track_running_stats=True)
+        )
+
+    def forward(self, x):
+        return self.op(x)

@@ -1,0 +1,17 @@
+{
+    "name":  ["str", "HAPT"],
+    "data_path":["str", "data/"],
+    "split":    ["str", "config/split-file/"],
+    "inNum":    ["int", "2"],
+    "NodeNum":  ["int", "8"],
+    "PreModel": ["str", "None"],
+    "epoch":    ["int", "240"],
+    "base_optm":["str", "Adam"],
+    "base_lr":  ["float", "1e-3"],
+    "batch_size":["int", "32"],
+    "arch_optm":["str", "Adam"],
+    "arch_lr":  ["float", "3e-4"],
+    "arch_decay":["float", "1e-3"],
+    "max_tau":  ["float", "10"],
+    "min_tau":  ["float", "1"]
+}

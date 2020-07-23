@@ -75,11 +75,13 @@ def convert_param(original_list):
     return re
 
 
-def load_config(path):
+def load_config(path, if_dict=False):
     path = str(path)
     with open(path, 'r') as f:
         data = json.load(f)
     content = {k: convert_param(v) for k, v in data.items()}
+    if if_dict:
+        return content
     Arguments = namedtuple('Configure', ' '.join(content.keys()))
     content = Arguments(**content)
     return content
