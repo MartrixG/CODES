@@ -4,11 +4,11 @@ import time
 import glob
 import numpy as np
 import torch
-import utils
+from utils.util import count_parameters_in_MB, get_data_transforms_cifar10, AvgrageMeter, save, accuracy, create_exp_dir
 import logging
 import argparse
 import torch.nn as nn
-import torch.utils
+import torch.utils.data
 import torch.nn.functional as F
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
@@ -43,7 +43,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -65,7 +65,7 @@ def main():
     torch.cuda.set_device(args.gpu)
     cudnn.benchmark = True
     torch.manual_seed(args.seed)
-    cudnn.enabled=True
+    cudnn.enabled = True
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
@@ -74,7 +74,7 @@ def main():
     criterion = criterion.cuda()
     model = Network(args.init_channels, CIFAR_CLASSES, args.layers, criterion)
     model = model.cuda()
-    logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
+    logging.info("param size = %fMB", count_parameters_in_MB(model))
 
     optimizer = torch.optim.SGD(
         model.parameters(),
@@ -82,7 +82,7 @@ def main():
         momentum=args.momentum,
         weight_decay=args.weight_decay)
 
-    train_transform, valid_transform = utils.get_data_transforms_cifar10(args)
+    train_transform, valid_transform = get_data_transforms_cifar10(args)
     train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
 
     num_train = len(train_data)
@@ -90,17 +90,17 @@ def main():
     split = int(np.floor(args.train_portion * num_train))
 
     train_queue = torch.utils.data.DataLoader(
-        train_data, batch_size=args.batch_size,
+        train_data, batch_size=2,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
-        pin_memory=True, num_workers=2)
+        pin_memory=True, num_workers=1)
 
     valid_queue = torch.utils.data.DataLoader(
-        train_data, batch_size=args.batch_size,
+        train_data, batch_size=2,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
-        pin_memory=True, num_workers=2)
+        pin_memory=True, num_workers=1)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, float(args.epochs), eta_min=args.learning_rate_min)
+        optimizer, int(args.epochs), eta_min=args.learning_rate_min)
 
     architect = Architect(model, args)
 
@@ -123,13 +123,13 @@ def main():
         valid_acc, valid_obj = infer(valid_queue, model, criterion)
         logging.info('valid_acc %f', valid_acc)
 
-        utils.save(model, os.path.join(args.save, 'weights.pt'))
+        save(model, os.path.join(args.save, 'weights.pt'))
 
 
 def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
-    objs = utils.AvgrageMeter()
-    top1 = utils.AvgrageMeter()
-    top5 = utils.AvgrageMeter()
+    objs = AvgrageMeter()
+    top1 = AvgrageMeter()
+    top5 = AvgrageMeter()
 
     for step, (input_data, target) in enumerate(train_queue):
         model.train()
@@ -157,7 +157,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
         nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
         optimizer.step()
 
-        prec1, prec5 = utils.accuracy(logits, target, top_k=(1, 5))
+        prec1, prec5 = accuracy(logits, target, top_k=(1, 5))
         objs.update(loss.data[0], n)
         top1.update(prec1.data[0], n)
         top5.update(prec5.data[0], n)
@@ -169,9 +169,9 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
 
 def infer(valid_queue, model, criterion):
-    objs = utils.AvgrageMeter()
-    top1 = utils.AvgrageMeter()
-    top5 = utils.AvgrageMeter()
+    objs = AvgrageMeter()
+    top1 = AvgrageMeter()
+    top5 = AvgrageMeter()
     model.eval()
 
     for step, (input_data, target) in enumerate(valid_queue):
@@ -183,7 +183,7 @@ def infer(valid_queue, model, criterion):
         res = model(input_data)
         loss = criterion(res, target)
 
-        prec1, prec5 = utils.accuracy(res, target, top_k=(1, 5))
+        prec1, prec5 = accuracy(res, target, top_k=(1, 5))
         n = input_data.size(0)
         objs.update(loss.data[0], n)
         top1.update(prec1.data[0], n)
