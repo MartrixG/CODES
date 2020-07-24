@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch import nn
 
 from model.classify_opt import OPS
@@ -12,6 +13,8 @@ ops_list = ['avg_pool_3x3',
             'group_dense_4_sigmoid',
             'group_dense_4_tanh',
             'none']
+
+acti_list = ['relu', 'sigmoid', 'tanh']
 
 
 class MixedOp(nn.Module):
@@ -32,6 +35,22 @@ class MixedOp(nn.Module):
         return sum(w * op(x) for w, op in zip(weights, self._ops))
 
 
+class LayerOp(nn.Module):
+    def __init__(self, C_in, C_out):
+        super(LayerOp, self).__init__()
+        self.activation = nn.ModuleList()
+        self.activation.append(nn.ReLU())
+        self.activation.append(nn.Sigmoid())
+        self.activation.append(nn.Tanh())
+        self.C_in = C_in
+        self.C_out = C_out
+        self.final_linear = nn.Linear(self.C_in, self.C_out)
+
+    def forward_gdas(self, x, weights, index):
+        out = self.activation[index[0].item()](x) * weights[0][index]
+        return self.final_linear(out)
+
+
 class Classifier(nn.Module):
     def __init__(self, node_num, in_num, C_in, C_out):
         super(Classifier, self).__init__()
@@ -47,9 +66,9 @@ class Classifier(nn.Module):
 
         self.ops = nn.ModuleDict()
         cout = None
-        for i in range(self.node_num):
-            for j in range(i + 1):
-                edge = str(j) + '->' + str(i + 1)
+        for i in range(1, self.node_num + 1):
+            for j in range(i):
+                edge = str(j) + '->' + str(i)
                 cin = self.C_in // 2 if j > 0 else self.C_in
                 cout = cin // 2 if j < 1 else cin
                 op = MixedOp(cin, cout)
@@ -57,14 +76,14 @@ class Classifier(nn.Module):
                 # print(edge)
                 # print('in:{:}, out:{:}'.format(cin, cout))
         assert cout is not None
-        self.final_linear = nn.Linear(cout, self.C_out)
+        self.final_linear = LayerOp(cout, self.C_out)
 
         self.edge_keys = sorted(list(self.ops.keys()))
         self.edge2index = {key: i for i, key in enumerate(self.edge_keys)}
-        self.arch_parameters = nn.Parameter(1e-3 * torch.randn(len(self.ops), len(ops_list)), requires_grad=True)
+        self.arch_parameters = nn.Parameter(torch.randn(len(self.ops), len(ops_list)), requires_grad=True)
+        self.activation_parameters = nn.Parameter(torch.randn(1, 3), requires_grad=True)
         self.tau = 10
 
-    # 加和还是拼接
     def forward_gdas(self, x, arch_weight, arch_index):
         if self.preprocess0 is not None:
             s0 = self.preprocess0(x)
@@ -83,8 +102,8 @@ class Classifier(nn.Module):
                 index = arch_index[self.edge2index[edge]].item()
                 # print("index: "+str(index))
                 clist.append(op.forward_gdas(h, weight, index))
-            states.append(sum(clist))
-        return states[-1]
+            states.append(sum(clist) / len(clist))
+        return sum(states[1:]) / (len(states) - 1)
 
     def forward(self, x, arc_type='gdas'):
         def get_gumbel_prob(xins):
@@ -108,30 +127,46 @@ class Classifier(nn.Module):
         else:
             raise ValueError
         output = output.view(output.size(0), -1)
+        acti_hardwts, acti_index = get_gumbel_prob(self.activation_parameters)
+        output = self.final_linear.forward_gdas(output, acti_hardwts, acti_index)
         return output
 
-    def genotype(self, genotype_file):
-        # genotype需要重
-        def _parse(weights):
-            gene = []
-            for i in range(self.node_num):
-                for j in range(i + 1):
-                    edges = []
-                    edge = str(j) + '->' + str(i + 1)
-                    ws = weights[self.edge2index[edge]]
-                    for k, op_name in enumerate(ops_list):
-                        # if op_name == 'none': continue
-                        edges.append((op_name, i, j, ws[k]))
-                    with open(genotype_file, "a+") as f:
-                        f.write("node_str: " + str(edge) + "\n")
-                    edges = sorted(edges, key=lambda x: -x[-1])
-                    selected_edges = edges[:1]
-                    with open(genotype_file, "a+") as f:
-                        f.write("edges: " + str(edges) + "\n")
-                        f.write("selected_edges: " + str(selected_edges) + "\n\n\n")
-                    gene.append(tuple(selected_edges))
-            return gene
-
+    def show_alphas(self):
         with torch.no_grad():
-            gene_arc = _parse(torch.softmax(self.arch_parameters, dim=-1).cpu().numpy())
-        return gene_arc
+            A = 'arch-parameters :\n{:}\n'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
+            B = 'activation-parameters : \n{:}'.format(nn.functional.softmax(self.activation_parameters, dim=-1).cpu())
+        return '{:}'.format(A + B)
+
+    def genotype(self, genotype_file):
+        arch_weight = torch.softmax(self.arch_parameters, dim=-1)
+        acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].detach().numpy()
+        with open(genotype_file, 'w') as f:
+            f.write("classify = {\n\t\"normal\": {\n")
+        for i in range(1, self.node_num + 1):
+            in_num = []
+            for j in range(i):
+                edges = []
+                edge = str(j) + '->' + str(i)
+                weights = arch_weight[self.edge2index[edge]]
+                for k, op_name in enumerate(ops_list):
+                    # if op_name == 'none': continue
+                    edges.append((op_name, j, i, float(weights[k])))
+                edges = sorted(edges, key=lambda x: -x[-1])
+                selected_edges = edges[-1]
+                in_num.append(selected_edges)
+            in_num = sorted(in_num, key=lambda x: -x[-1])
+            # log_write : 'node {:} selectable edges:{:}\n'.format(i, in_num)
+            with open(genotype_file, 'a+') as f:
+                f.write("\t\t\"{:}\": ".format(i))
+                gen = "["
+                for j in range(self.in_num):
+                    if j + 1 > in_num.__len__():
+                        break
+                    gen += "\"{:},{:}\", ".format(in_num[j][1], in_num[j][0])
+                gen = gen[:-2]
+                if i == self.node_num:
+                    index = np.argmax(acti_weight)
+                    gen += "]\n\t},\n\t\"activation\": [\"%s\"]\n}\n" % acti_list[index]
+                else:
+                    gen += "], \n"
+                f.write(gen)

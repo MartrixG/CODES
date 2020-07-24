@@ -1,4 +1,4 @@
-DARTS_V2 = {
+CNN = {
     "normal": {
         "2": ["0,sep_conv_3x3", "1,sep_conv_3x3"],
         "3": ["0,sep_conv_3x3", "1,sep_conv_3x3"],

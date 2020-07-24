@@ -2,6 +2,7 @@
     "name":  ["str", "HAPT"],
     "data_path":["str", "data/"],
     "split":    ["str", "config/split-file/"],
+    "genotype":["str", "config/genotype/classify-genotype.py"],
     "inNum":    ["int", "2"],
     "NodeNum":  ["int", "8"],
     "PreModel": ["str", "None"],
