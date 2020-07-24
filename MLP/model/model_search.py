@@ -141,7 +141,7 @@ class Classifier(nn.Module):
         arch_weight = torch.softmax(self.arch_parameters, dim=-1)
         acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].detach().numpy()
         with open(genotype_file, 'w') as f:
-            f.write("classify = {\n\t\"normal\": {\n")
+            f.write("{\n\t\"classify\": {\n\t\t\"normal\": {\n")
         for i in range(1, self.node_num + 1):
             in_num = []
             for j in range(i):
@@ -157,7 +157,7 @@ class Classifier(nn.Module):
             in_num = sorted(in_num, key=lambda x: -x[-1])
             # log_write : 'node {:} selectable edges:{:}\n'.format(i, in_num)
             with open(genotype_file, 'a+') as f:
-                f.write("\t\t\"{:}\": ".format(i))
+                f.write("\t\t\t\"{:}\": ".format(i))
                 gen = "["
                 for j in range(self.in_num):
                     if j + 1 > in_num.__len__():
@@ -166,7 +166,7 @@ class Classifier(nn.Module):
                 gen = gen[:-2]
                 if i == self.node_num:
                     index = np.argmax(acti_weight)
-                    gen += "]\n\t},\n\t\"activation\": [\"%s\"]\n}\n" % acti_list[index]
+                    gen += "]\n\t\t},\n\t\t\"activation\": \"%s\"\n\t}\n}" % acti_list[index]
                 else:
                     gen += "], \n"
                 f.write(gen)

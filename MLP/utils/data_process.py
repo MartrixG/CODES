@@ -12,12 +12,12 @@ from utils.util import load_config
 
 class_num = {'cifar10': 10,
              'cifar100': 100,
-             'HAPT': 12,
-             'UJI': 5}
-x_shape = {'cifar10': (32, 32, 3),
-           'cifar100': (32, 32, 3),
-           'HAPT': 561,
-           'UJI': 520}
+             'hapt': 12,
+             'uji': 5}
+x_shape = {'cifar10': (3, 32, 32),
+           'cifar100': (3, 32, 32),
+           'hapt': 561,
+           'uji': 520}
 
 
 class SearchDataset(Dataset):
@@ -171,11 +171,11 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                   pin_memory=True
                                   )
         valid_loader = DataLoader(NormalDataset(name, valid_data),
-                                 batch_size=batch_size,
-                                 sampler=torch.utils.data.sampler.SubsetRandomSampler(valid_split),
-                                 num_workers=workers,
-                                 pin_memory=True
-                                 )
+                                  batch_size=batch_size,
+                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(valid_split),
+                                  num_workers=workers,
+                                  pin_memory=True
+                                  )
         test_loader = DataLoader(NormalDataset(name, test_data),
                                  batch_size=batch_size,
                                  shuffle=True,
