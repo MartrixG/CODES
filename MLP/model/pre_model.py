@@ -1,12 +1,11 @@
-import json
 from collections import namedtuple
 
-import torch
-from torch import nn
+from torch import nn, cat
+from operation.cnn_opt import FactorizedReduce, ReLUConvBN, Identity
+from operation.classify_opt import ReLUConvBN as Chanel_conv
+from operation.cnn_opt import OPS as CNN_OPS
 from utils.util import drop_path
-from model.operations import FactorizedReduce, ReLUConvBN, Identity
-from model.operations import OPS as CNN_OPS
-from model.classify_opt import OPS as DNN_OPS
+
 
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 DARTS_V2 = Genotype(
@@ -16,91 +15,33 @@ DARTS_V2 = Genotype(
             ('skip_connect', 2), ('skip_connect', 2), ('max_pool_3x3', 1)], reduce_concat=[2, 3, 4, 5])
 
 
-class Network(nn.Module):
-    def __init__(self, name, x_shape, num_class, premodel, genotype, args):
-        super(Network, self).__init__()
-        self.name = name.lower()
+class pre_model(nn.Module):
+    def __init__(self, name, x_shape, num_class, args):
+        super(pre_model, self).__init__()
+        self.name = name
         self.x_shape = x_shape
         self.num_class = num_class
-        self.premodel = premodel
-        self.genotype = genotype
         if self.name in ['cifar10', 'cifar100']:
-            assert self.premodel != "None"
-            self.premodel = NetworkCIFAR(args.init_channels, self.num_class,
-                                         args.layers, args.auxiliary, DARTS_V2, args)
+            self.premodel = network_CIFAR(args.init_channels, self.num_class,
+                                          args.layers, args.auxiliary, DARTS_V2, args)
             self.C_in = self.premodel.out_dim
         elif self.name in ['hapt', 'uji']:
-            # UCI数据集premodel部分，train和search都一样
-            assert self.premodel == "None"
             self.C_in = self.x_shape
             if self.C_in % 4 != 0:
                 _c_in = (self.C_in // 4) * 4
-                self.premodel = DNN_OPS['ReLUConvBN'](self.C_in, _c_in)
+                self.premodel = Chanel_conv(self.C_in, _c_in)
                 self.C_in = _c_in
         else:
             raise ValueError
-        with open(self.genotype) as f:
-            classifier_arch = json.load(f)['classify']
-        self._compile(classifier_arch)
-
-    # train：classifier部分（根据genotype生成网络）
-    def _compile(self, classifier_arch):
-        normal = classifier_arch['normal']
-        cout = None
-
-        self.classifier = nn.ModuleDict()
-        self.start_node_ops = {}
-        self.num_node = len(normal.keys())
-        for i in range(1, self.num_node + 1):
-            self.start_node_ops[str(i)] = []
-
-        for target_node in normal.keys():
-            for edges in normal[target_node]:
-                start_node, op_name = edges.split(',')
-                edge_name = start_node + '->' + target_node
-                node_num = int(start_node)
-                cin = self.C_in // 2 if node_num > 0 else self.C_in
-                cout = cin // 2 if node_num < 1 else cin
-                self.classifier[edge_name] = DNN_OPS[op_name](cin, cout)
-                self.start_node_ops[target_node].append(edge_name)
-
-        acti = classifier_arch['activation']
-        if acti == 'relu':
-            self.activation = nn.ReLU()
-        elif acti == 'sigmoid':
-            self.activation = nn.Sigmoid()
-        elif acti == 'tanh':
-            self.activation = nn.Tanh()
-        else:
-            raise ValueError
-
-        assert cout is not None
-        self.last_linear = nn.Linear(cout, self.num_class)
 
     def forward(self, feature):
         if self.name in ['cifar10', 'cifar100']:
-            feature, logits_aux = self.premodel(feature)
+            return self.premodel(feature)
         else:
             feature = feature.reshape(feature.size(0), feature.size(1), 1, 1)
-            feature = self.premodel(feature)
-        states = [feature]
-        for i in range(1, self.num_node + 1):
-            edges = self.start_node_ops[str(i)]
-            c_list = []
-            for edge in edges:
-                op = self.classifier[edge]
-                c_list.append(op(states[int(edge[0])]))
-            states.append(sum(c_list) / len(c_list))
-        out = sum(states[1:])
-        out = self.activation(out)
-        out = out.reshape(out.size(0), -1)
-        out = self.last_linear(out)
-        if self.name in ['cifar10', 'cifar100']:
-            return out, logits_aux
-        else:
-            return out
+            return self.premodel(feature)
 
-# cnn pre_model(train和search都一样)
+
 class Cell(nn.Module):
 
     def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):
@@ -152,14 +93,14 @@ class Cell(nn.Module):
                     h2 = drop_path(h2, drop_prob)
             s = h1 + h2
             states += [s]
-        return torch.cat([states[i] for i in self._concat], dim=1)
+        return cat([states[i] for i in self._concat], dim=1)
 
 
-class AuxiliaryHeadCIFAR(nn.Module):
+class auxiliary_head_CIFAR(nn.Module):
 
     def __init__(self, C, num_classes):
         """assuming input size 8x8"""
-        super(AuxiliaryHeadCIFAR, self).__init__()
+        super(auxiliary_head_CIFAR, self).__init__()
         self.features = nn.Sequential(
             nn.ReLU(inplace=True),
             nn.AvgPool2d(5, stride=3, padding=0, count_include_pad=False),  # image size = 2 x 2
@@ -178,10 +119,10 @@ class AuxiliaryHeadCIFAR(nn.Module):
         return x
 
 
-class NetworkCIFAR(nn.Module):
+class network_CIFAR(nn.Module):
 
     def __init__(self, C, num_classes, layers, auxiliary, genotype, args):
-        super(NetworkCIFAR, self).__init__()
+        super(network_CIFAR, self).__init__()
         self._layers = layers
         self._auxiliary = auxiliary
         self.drop_path_prob = args.drop_path_prob
@@ -196,6 +137,7 @@ class NetworkCIFAR(nn.Module):
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         self.cells = nn.ModuleList()
         reduction_prev = False
+        C_to_auxiliary = None
         for i in range(layers):
             if i in [layers // 3, 2 * layers // 3]:
                 C_curr *= 2
@@ -209,16 +151,11 @@ class NetworkCIFAR(nn.Module):
             if i == 2 * layers // 3:
                 C_to_auxiliary = C_prev
 
+        assert C_to_auxiliary is not None
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHeadCIFAR(C_to_auxiliary, num_classes)
+            self.auxiliary_head = auxiliary_head_CIFAR(C_to_auxiliary, num_classes)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.out_dim = C_prev
-        # self.classifier = nn.Linear(C_prev, num_classes)
-        # if args.cross_link:
-        #     self.classifier = nn.ModuleList([cross_classifier(C_prev, num_classes)])
-        # else:
-        #     self.classifier = nn.ModuleList([classifier(C_prev, num_classes, args)])
-        # logging.info('classifier:\n{:}'.format(self.classifier))
 
     def forward(self, feature):
         logits_aux = None
@@ -229,6 +166,4 @@ class NetworkCIFAR(nn.Module):
                 if self._auxiliary and self.training:
                     logits_aux = self.auxiliary_head(s1)
         out = self.global_pooling(s1)
-        # logits = self.classifier(out.view(out.size(0), -1))
-        # logits = self.classifier[0](out)
         return out, logits_aux

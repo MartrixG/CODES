@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 OPS = {
     # 3x3 Avgpooling         (1)

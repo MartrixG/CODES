@@ -1,8 +1,10 @@
+import json
+
 import torch
 import numpy as np
 from torch import nn
 
-from model.classify_opt import OPS
+from operation.classify_opt import OPS
 
 ops_list = ['avg_pool_3x3',
             'max_pool_3x3',
@@ -16,7 +18,7 @@ ops_list = ['avg_pool_3x3',
 
 acti_list = ['relu', 'sigmoid', 'tanh']
 
-# search classifier部分搜索网络
+
 class MixedOp(nn.Module):
 
     def __init__(self, C_in, C_out):
@@ -51,9 +53,9 @@ class LayerOp(nn.Module):
         return self.final_linear(out)
 
 
-class Classifier(nn.Module):
+class search_classifier(nn.Module):
     def __init__(self, node_num, in_num, C_in, C_out):
-        super(Classifier, self).__init__()
+        super(search_classifier, self).__init__()
         self.in_num = in_num
         self.node_num = node_num
         self.C_in = C_in
@@ -131,7 +133,7 @@ class Classifier(nn.Module):
         output = self.final_linear.forward_gdas(output, acti_hardwts, acti_index)
         return output
 
-    def show_alphas(self):
+    def get_alphas(self):
         with torch.no_grad():
             A = 'arch-parameters :\n{:}\n'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
             B = 'activation-parameters : \n{:}'.format(nn.functional.softmax(self.activation_parameters, dim=-1).cpu())
@@ -139,7 +141,8 @@ class Classifier(nn.Module):
 
     def genotype(self, genotype_file):
         arch_weight = torch.softmax(self.arch_parameters, dim=-1)
-        acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].detach().numpy()
+        acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].cpu().detach().numpy()
+        log_write = ''
         with open(genotype_file, 'w') as f:
             f.write("{\n\t\"classify\": {\n\t\t\"normal\": {\n")
         for i in range(1, self.node_num + 1):
@@ -155,7 +158,7 @@ class Classifier(nn.Module):
                 selected_edges = edges[-1]
                 in_num.append(selected_edges)
             in_num = sorted(in_num, key=lambda x: -x[-1])
-            # log_write : 'node {:} selectable edges:{:}\n'.format(i, in_num)
+            log_write += ('node {:} selectable edges:{:}\n'.format(i, in_num))
             with open(genotype_file, 'a+') as f:
                 f.write("\t\t\t\"{:}\": ".format(i))
                 gen = "["
@@ -170,3 +173,63 @@ class Classifier(nn.Module):
                 else:
                     gen += "], \n"
                 f.write(gen)
+        return log_write
+
+
+class train_classifier(nn.Module):
+    def __init__(self, C_in, num_class, genotype):
+        super(train_classifier, self).__init__()
+        self.C_in = C_in
+        self.num_class = num_class
+        self.genotype = genotype
+        with open(self.genotype) as f:
+            classifier_arch = json.load(f)['classify']
+        self._compile(classifier_arch)
+
+    def _compile(self, classifier_arch):
+        normal = classifier_arch['normal']
+        cout = None
+
+        self.classifier = nn.ModuleDict()
+        self.start_node_ops = {}
+        self.num_node = len(normal.keys())
+        for i in range(1, self.num_node + 1):
+            self.start_node_ops[str(i)] = []
+
+        for target_node in normal.keys():
+            for edges in normal[target_node]:
+                start_node, op_name = edges.split(',')
+                edge_name = start_node + '->' + target_node
+                node_num = int(start_node)
+                cin = self.C_in // 2 if node_num > 0 else self.C_in
+                cout = cin // 2 if node_num < 1 else cin
+                self.classifier[edge_name] = OPS[op_name](cin, cout)
+                self.start_node_ops[target_node].append(edge_name)
+
+        acti = classifier_arch['activation']
+        if acti == 'relu':
+            self.activation = nn.ReLU()
+        elif acti == 'sigmoid':
+            self.activation = nn.Sigmoid()
+        elif acti == 'tanh':
+            self.activation = nn.Tanh()
+        else:
+            raise ValueError
+
+        assert cout is not None
+        self.last_linear = nn.Linear(cout, self.num_class)
+
+    def forward(self, feature):
+        states = [feature]
+        for i in range(1, self.num_node + 1):
+            edges = self.start_node_ops[str(i)]
+            c_list = []
+            for edge in edges:
+                op = self.classifier[edge]
+                c_list.append(op(states[int(edge[0])]))
+            states.append(sum(c_list) / len(c_list))
+        out = sum(states[1:])
+        out = self.activation(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.last_linear(out)
+        return out

@@ -1,8 +1,11 @@
 import os
 import sys
 
-from model_search import Classifier
+from classifier_model import search_classifier
+from pre_model import pre_model
+from train_model import Network
 from utils.data_process import get_src_dataset, get_search_loader
+from utils.util import count_parameters_in_MB
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
@@ -30,7 +33,7 @@ def main(args):
     cudnn.benchmark = False
     cudnn.deterministic = True
     logging.info('gpu device = %d' % args.gpu)
-    logging.info("args = %s", args)
+    logging.info("mission type : {:}".format(args.type))
 
     train_data, test_data, x_shape, class_num = get_src_dataset(args.data_path, args.name)
     search_loader, train_loader, valid_loader, test_loader = get_search_loader(
@@ -38,4 +41,5 @@ def main(args):
     logging.info('load the dataset : {:}\tbatch_size : {:}'.format(args.name, args.batch_size))
     logging.info('save the genotype to {:}'.format(args.genotype))
 
-    # model = Classifier(args.num_node, args.in_num, 561, 12)
+    model = Network(args.name, x_shape, class_num, args).cuda()
+    logging.info('model param : {:}MB'.format(count_parameters_in_MB(model)))

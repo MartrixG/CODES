@@ -141,7 +141,7 @@ def prepare(args):
         seed = np.random.randint(0, 10000)
     else:
         seed = args.seed
-    args.save = 'log/{}-{}-seed-{:05d}'.format(args.evaluate, time.strftime("%Y-%m-%d-%H-%M-%S"), seed)
+    args.save = 'log/{}-{}-seed-{:05d}'.format(args.type, time.strftime("%Y-%m-%d-%H-%M-%S"), seed)
     create_exp_dir(args.save)
 
     log_format = '%(asctime)s %(message)s'
