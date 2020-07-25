@@ -1,0 +1,15 @@
+{
+	"classify": {
+		"normal": {
+			"1": ["0,group_dense_4_relu"], 
+			"2": ["0,dense_layer_sigmoid", "1,none"], 
+			"3": ["0,group_dense_4_relu", "1,group_dense_4_sigmoid"], 
+			"4": ["3,group_dense_4_tanh", "2,group_dense_4_sigmoid"], 
+			"5": ["1,none", "2,dense_layer_relu"], 
+			"6": ["4,max_pool_3x3", "1,dense_layer_tanh"], 
+			"7": ["4,group_dense_4_tanh", "3,group_dense_4_relu"], 
+			"8": ["2,group_dense_4_sigmoid", "1,group_dense_4_relu"]
+		},
+		"activation": "tanh"
+	}
+}

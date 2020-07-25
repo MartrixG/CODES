@@ -1,4 +1,3 @@
-import glob
 import json
 import logging
 import os
@@ -6,18 +5,16 @@ import shutil
 import sys
 import time
 from collections import namedtuple
+from torch import optim, nn
 
 import numpy as np
 import torchvision.transforms as transforms
 import torch
 
 
-class AvgrageMeter(object):
+class AverageMeter(object):
 
     def __init__(self):
-        self.reset()
-
-    def reset(self):
         self.avg = 0
         self.sum = 0
         self.cnt = 0
@@ -109,6 +106,60 @@ def load_config(path, if_dict=False):
     return content
 
 
+def log_config(args):
+    logging.info("mission type : {:}".format(args.type))
+    logging.info('load the dataset : {:}'.format(args.name))
+    if args.type == 'search':
+        args.genotype_file = args.save + args.genotype_file
+        logging.info('save the genotype to {:}'.format(args.genotype_file))
+        logging.info('batch_size : {:}'.format(args.batch_size))
+        logging.info('epoch : {:}'.format(args.epoch))
+        logging.info('in_num : {:}'.format(args.in_num))
+        logging.info('num_node : {:}'.format(args.num_node))
+        logging.info('-' * 25 + 'weight config' + '-' * 25)
+        logging.info('base_optm : {:}'.format(args.base_optm))
+        logging.info('base_lr : {:}'.format(args.base_lr))
+        logging.info('base_decay : {:}'.format(args.base_decay))
+        logging.info('base_scheduler : {:}'.format(args.base_scheduler))
+        logging.info('-' * 25 + 'arch config' + '-' * 25)
+        logging.info('arch_optm : {:}'.format(args.arch_optm))
+        logging.info('arch_lr : {:}'.format(args.arch_lr))
+        logging.info('arch_decay : {:}'.format(args.arch_decay))
+        logging.info('max_tau : {:}'.format(args.max_tau))
+        logging.info('min_tau : {:}'.format(args.min_tau))
+    elif args.type == 'train':
+        logging.info('get the genotype from {:}'.format(args.genotype_file))
+        logging.info('batch_size : {:}'.format(args.batch_size))
+        logging.info('epoch : {:}'.format(args.epoch))
+        logging.info('optimizer : {:}'.format(args.optimizer))
+        logging.info('scheduler : {:}'.format(args.scheduler))
+        logging.info('learning rate : {:}'.format(args.lr))
+        logging.info('momentum : {:}'.format(args.momentum))
+        logging.info('weight_decay : {:}'.format(args.weight_decay))
+    logging.info('args:{:}'.format(args))
+
+
+def get_opt_scheduler(params, optm, lr, decay, scheduler_name, epoch):
+    if optm == 'Adam':
+        optimizer = optim.Adam(params, lr, weight_decay=decay)
+    else:
+        raise ValueError
+    if scheduler_name == 'PolyScheduler':
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epoch)
+    else:
+        raise ValueError
+    criterion = nn.CrossEntropyLoss()
+    return optimizer, scheduler, criterion
+
+
+def save(model, model_path):
+    torch.save(model.state_dict(), model_path)
+
+
+def load(model, model_path):
+    model.load_state_dict(torch.load(model_path))
+
+
 def accuracy(output, target, top_k=(1,)):
     max_k = max(top_k)
     batch_size = target.size(0)
@@ -141,20 +192,16 @@ def prepare(args):
         seed = np.random.randint(0, 10000)
     else:
         seed = args.seed
-    args.save = 'log/{}-{}-seed-{:05d}'.format(args.type, time.strftime("%Y-%m-%d-%H-%M-%S"), seed)
+    args.save = 'log/{}-{}-seed-{:05d}/'.format(args.type, time.strftime("%Y-%m-%d-%H-%M-%S"), seed)
     create_exp_dir(args.save)
 
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh = logging.FileHandler(os.path.join(args.save, args.type + '.log'))
     fh.setFormatter(logging.Formatter(log_format))
     logging.getLogger().addHandler(fh)
     return seed
-
-
-def count_parameters_in_MB(model):
-    return np.sum(np.prod(v.size()) for name, v in model.named_parameters() if "auxiliary" not in name) / 1e6
 
 
 def drop_path(x, drop_prob):

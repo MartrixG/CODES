@@ -1,4 +1,5 @@
 import json
+import logging
 
 import torch
 import numpy as np
@@ -82,9 +83,15 @@ class search_classifier(nn.Module):
 
         self.edge_keys = sorted(list(self.ops.keys()))
         self.edge2index = {key: i for i, key in enumerate(self.edge_keys)}
-        self.arch_parameters = nn.Parameter(torch.randn(len(self.ops), len(ops_list)), requires_grad=True)
-        self.activation_parameters = nn.Parameter(torch.randn(1, 3), requires_grad=True)
+        self.arch_parameters = nn.Parameter(torch.randn(len(self.ops), len(ops_list)))
+        self.activation_parameters = nn.Parameter(torch.randn(1, 3))
         self.tau = 10
+
+    def set_tau(self, tau):
+        self.tau = tau
+
+    def get_tau(self):
+        return self.tau
 
     def forward_gdas(self, x, arch_weight, arch_index):
         if self.preprocess0 is not None:
@@ -133,16 +140,22 @@ class search_classifier(nn.Module):
         output = self.final_linear.forward_gdas(output, acti_hardwts, acti_index)
         return output
 
-    def get_alphas(self):
+    def show_alphas(self):
         with torch.no_grad():
-            A = 'arch-parameters :\n{:}\n'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
+            A = 'arch-parameters :\n{:}'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
             B = 'activation-parameters : \n{:}'.format(nn.functional.softmax(self.activation_parameters, dim=-1).cpu())
-        return '{:}'.format(A + B)
+        return A, B
+
+    def get_alphas(self):
+        return [self.arch_parameters, self.activation_parameters]
+
+    def get_weights(self):
+        x_list = list(self.ops.parameters()) + list(self.final_linear.parameters())
+        return x_list
 
     def genotype(self, genotype_file):
         arch_weight = torch.softmax(self.arch_parameters, dim=-1)
         acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].cpu().detach().numpy()
-        log_write = ''
         with open(genotype_file, 'w') as f:
             f.write("{\n\t\"classify\": {\n\t\t\"normal\": {\n")
         for i in range(1, self.node_num + 1):
@@ -158,7 +171,7 @@ class search_classifier(nn.Module):
                 selected_edges = edges[-1]
                 in_num.append(selected_edges)
             in_num = sorted(in_num, key=lambda x: -x[-1])
-            log_write += ('node {:} selectable edges:{:}\n'.format(i, in_num))
+            logging.info('node {:} selectable edges:{:}'.format(i, in_num))
             with open(genotype_file, 'a+') as f:
                 f.write("\t\t\t\"{:}\": ".format(i))
                 gen = "["
@@ -173,16 +186,15 @@ class search_classifier(nn.Module):
                 else:
                     gen += "], \n"
                 f.write(gen)
-        return log_write
 
 
 class train_classifier(nn.Module):
-    def __init__(self, C_in, num_class, genotype):
+    def __init__(self, C_in, num_class, genotype_file):
         super(train_classifier, self).__init__()
         self.C_in = C_in
         self.num_class = num_class
-        self.genotype = genotype
-        with open(self.genotype) as f:
+        self.genotype_file = genotype_file
+        with open(self.genotype_file) as f:
             classifier_arch = json.load(f)['classify']
         self._compile(classifier_arch)
 
@@ -218,6 +230,9 @@ class train_classifier(nn.Module):
 
         assert cout is not None
         self.last_linear = nn.Linear(cout, self.num_class)
+
+    def get_weights(self):
+        return self.parameters()
 
     def forward(self, feature):
         states = [feature]

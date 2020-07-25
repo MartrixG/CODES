@@ -22,11 +22,12 @@ class pre_model(nn.Module):
         self.x_shape = x_shape
         self.num_class = num_class
         if self.name in ['cifar10', 'cifar100']:
+            self.auxiliary_weight = args.auxiliary_weight
             self.premodel = network_CIFAR(args.init_channels, self.num_class,
                                           args.layers, args.auxiliary, DARTS_V2, args)
             self.C_in = self.premodel.out_dim
         elif self.name in ['hapt', 'uji']:
-            self.C_in = self.x_shape
+            self.C_in = self.x_shape[1]
             if self.C_in % 4 != 0:
                 _c_in = (self.C_in // 4) * 4
                 self.premodel = Chanel_conv(self.C_in, _c_in)
@@ -40,6 +41,12 @@ class pre_model(nn.Module):
         else:
             feature = feature.reshape(feature.size(0), feature.size(1), 1, 1)
             return self.premodel(feature)
+
+    def get_weights(self):
+        return self.premodel.parameters()
+
+    def set_drop_path_prob(self, drop_path_prob):
+        self.premodel.drop_path_prob = drop_path_prob
 
 
 class Cell(nn.Module):

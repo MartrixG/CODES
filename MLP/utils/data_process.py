@@ -14,10 +14,10 @@ class_num = {'cifar10': 10,
              'cifar100': 100,
              'hapt': 12,
              'uji': 5}
-x_shape = {'cifar10': (3, 32, 32),
-           'cifar100': (3, 32, 32),
-           'hapt': 561,
-           'uji': 520}
+x_shape = {'cifar10': [1, 3, 32, 32],
+           'cifar100': [1, 3, 32, 32],
+           'hapt': [1, 561, 1, 1],
+           'uji': [1, 520, 1, 1]}
 
 
 class SearchDataset(Dataset):

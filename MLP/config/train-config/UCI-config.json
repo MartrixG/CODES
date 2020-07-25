@@ -1,14 +1,12 @@
 {
-    "name":     ["str", "hapt"],
-    "data_path":["str", "data/"],
-    "split":    ["str", "config/split-file/"],
-    "genotype": ["str", "config/genotype/classify-genotype.json"],
-    "premodel": ["str", "None"],
-    "epoch":    ["int", "600"],
-    "optimizer":["str", "Adam"],
-    "scheduler":["str", "PolyScheduler"],
-    "lr":       ["float", "1e-3"],
-    "momentum": ["float", "0.9"],
-    "weight_decay": ["float", "3e-4"],
-    "batch_size":["int", "32"]
+    "name":         ["str", "hapt"],
+    "type":         ["str", "train"],
+    "genotype_file":["str", "config/genotype/UCI-genotype.json"],
+    "epoch":        ["int", "600"],
+    "batch_size":   ["int", "32"],
+    "optimizer":    ["str", "Adam"],
+    "scheduler":    ["str", "PolyScheduler"],
+    "lr":           ["float", "1e-3"],
+    "momentum":     ["float", "0.9"],
+    "weight_decay": ["float", "3e-4"]
 }
