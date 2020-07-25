@@ -30,6 +30,7 @@ class Network(nn.Module):
                                          args.layers, args.auxiliary, DARTS_V2, args)
             self.C_in = self.premodel.out_dim
         elif self.name in ['hapt', 'uji']:
+            # UCI数据集premodel部分，train和search都一样
             assert self.premodel == "None"
             self.C_in = self.x_shape
             if self.C_in % 4 != 0:
@@ -42,6 +43,7 @@ class Network(nn.Module):
             classifier_arch = json.load(f)['classify']
         self._compile(classifier_arch)
 
+    # train：classifier部分（根据genotype生成网络）
     def _compile(self, classifier_arch):
         normal = classifier_arch['normal']
         cout = None
@@ -98,7 +100,7 @@ class Network(nn.Module):
         else:
             return out
 
-
+# cnn pre_model(train和search都一样)
 class Cell(nn.Module):
 
     def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):

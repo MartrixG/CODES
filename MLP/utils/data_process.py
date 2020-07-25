@@ -118,7 +118,7 @@ def get_src_dataset(root, name, cutout_length=None):
         assert len(train_data) == 50000 and len(test_data) == 10000
     else:
         raise ValueError
-    return train_data, test_data, x_shape[name], class_num[name]
+    return train_data, test_data, x_shape[name.lower()], class_num[name.lower()]
 
 
 def get_search_loader(train_data, test_data, name, config_root, workers, batch_size=None):

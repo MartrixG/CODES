@@ -16,7 +16,7 @@ ops_list = ['avg_pool_3x3',
 
 acti_list = ['relu', 'sigmoid', 'tanh']
 
-
+# search classifier部分搜索网络
 class MixedOp(nn.Module):
 
     def __init__(self, C_in, C_out):
