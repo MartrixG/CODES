@@ -16,7 +16,8 @@ OPS = {
     # noe                    (1)
     'none': lambda C_in, C_out: Zero(C_in, C_out),
 
-    'ReLUConvBN': lambda C_in, C_out: ReLUConvBN(C_in, C_out)
+    'ReLUConvBN': lambda C_in, C_out: ReLUConvBN(C_in, C_out),
+    'skip': lambda: Skip()
 }
 
 
@@ -160,7 +161,6 @@ class Zero(nn.Module):
 
 
 class ReLUConvBN(nn.Module):
-
     def __init__(self, C_in, C_out):
         super(ReLUConvBN, self).__init__()
         self.op = nn.Sequential(
@@ -171,3 +171,11 @@ class ReLUConvBN(nn.Module):
 
     def forward(self, x):
         return self.op(x)
+
+
+class Skip(nn.Module):
+    def __init__(self):
+        super(Skip, self).__init__()
+
+    def forward(self, x):
+        return x

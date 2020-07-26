@@ -113,7 +113,7 @@ def search(args):
     logging.info('classifier:\n{:}'.format(model.classifier))
 
     best_acc = 0
-    for epoch in range(1, args.epoch + 1):
+    for epoch in range(1, 3):
         new_tau = args.max_tau - (args.max_tau - args.min_tau) * epoch / (args.epoch - 1)
         model.set_tau(new_tau)
         logging.info('epoch:{:} LR:{:.6f} tau:{:.6f}'.format(epoch, w_scheduler.get_lr()[0], new_tau))
@@ -138,9 +138,9 @@ def search(args):
             logging.info('find the best model. best acc is {:.5f}%'.format(best_acc))
             logging.info('Save it to {:}'.format(args.save + 'best.pt'))
             save(model, os.path.join(args.save, 'best.pt'))
+            model.get_genotype()
 
         w_scheduler.step()
-        model.get_genotype()
 
     logging.info('best acc is {:.5f}%'.format(best_acc))
 
@@ -156,17 +156,17 @@ def train(args):
     flop, param = get_model_infos(model, x_shape)
     logging.info('Params={:.2f} MB, FLOPs={:.2f} M'.format(param, flop))
 
-    w_optimizer, w_scheduler, criterion = get_opt_scheduler(
-        model.get_weights(), args.base_optm, args.base_lr, args.base_decay, args.base_scheduler, args.epoch)
-    if args.arch_optm == 'Adam':
-        a_optimizer = optim.Adam(model.get_alphas(), args.arch_lr, weight_decay=args.arch_decay)
-    else:
-        raise ValueError
-    logging.info('w-optimizer : {:}'.format(w_optimizer))
-    logging.info('a-optimizer : {:}'.format(a_optimizer))
-    logging.info('w-scheduler : {:}'.format(w_scheduler))
+    optimizer, scheduler, criterion = get_opt_scheduler(
+        model.get_weights(), args.optimizer, args.lr, args.weight_decay, args.scheduler, args.epoch)
+    logging.info('w-optimizer : {:}'.format(optimizer))
+    logging.info('w-scheduler : {:}'.format(scheduler))
     logging.info('criterion   : {:}'.format(criterion))
-
+    for (input_feature, target) in train_loader:
+        input_feature = input_feature.cuda()
+        target = target.cuda()
+        logits = model(input_feature)
+        loss = criterion(target, logits)
+        print(loss.data)
 
 def main(args):
     seed = util.prepare(args)
@@ -184,7 +184,7 @@ def main(args):
     if args.type == 'search':
         search(args)
     elif args.type == 'train':
-        pass
+        train(args)
     elif args.type == 'test':
         pass
     else:

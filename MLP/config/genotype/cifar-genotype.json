@@ -1,15 +1,25 @@
 {
 	"classify": {
 		"normal": {
-			"1": ["0,dense_layer_relu"], 
-			"2": ["1,group_dense_4_tanh", "0,group_dense_4_sigmoid"], 
-			"3": ["0,none", "2,max_pool_3x3"], 
-			"4": ["0,group_dense_4_relu", "2,max_pool_3x3"], 
-			"5": ["0,group_dense_4_tanh", "1,dense_layer_relu"], 
-			"6": ["0,group_dense_4_sigmoid", "4,none"], 
-			"7": ["2,dense_layer_tanh", "1,avg_pool_3x3"], 
+			"1": ["0,dense_layer_relu"],
+			"2": ["1,group_dense_4_tanh", "0,group_dense_4_sigmoid"],
+			"3": ["0,none", "2,max_pool_3x3"],
+			"4": ["0,group_dense_4_relu", "2,max_pool_3x3"],
+			"5": ["0,group_dense_4_tanh", "1,dense_layer_relu"],
+			"6": ["0,group_dense_4_sigmoid", "4,none"],
+			"7": ["2,dense_layer_tanh", "1,avg_pool_3x3"],
 			"8": ["6,none", "5,none"]
 		},
-		"activation": "relu"
+		"activation": {
+			"1": "relu",
+			"2": "sigmoid",
+			"3": "tanh",
+			"4": "relu",
+			"5": "sigmoid",
+			"6": "tanh",
+			"7": "relu",
+			"8": "sigmoid",
+			"9": "tanh"
+		}
 	}
 }

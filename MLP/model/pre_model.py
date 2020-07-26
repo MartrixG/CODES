@@ -32,6 +32,7 @@ class pre_model(nn.Module):
                 _c_in = (self.C_in // 4) * 4
                 self.premodel = Chanel_conv(self.C_in, _c_in)
                 self.C_in = _c_in
+            # else bug
         else:
             raise ValueError
 

@@ -17,7 +17,7 @@ ops_list = ['avg_pool_3x3',
             'group_dense_4_tanh',
             'none']
 
-acti_list = ['relu', 'sigmoid', 'tanh']
+acti_list = ['relu', 'sigmoid', 'tanh', 'skip']
 
 
 class MixedOp(nn.Module):
@@ -39,19 +39,17 @@ class MixedOp(nn.Module):
 
 
 class LayerOp(nn.Module):
-    def __init__(self, C_in, C_out):
+    def __init__(self):
         super(LayerOp, self).__init__()
         self.activation = nn.ModuleList()
         self.activation.append(nn.ReLU())
         self.activation.append(nn.Sigmoid())
         self.activation.append(nn.Tanh())
-        self.C_in = C_in
-        self.C_out = C_out
-        self.final_linear = nn.Linear(self.C_in, self.C_out)
+        self.activation.append(OPS['skip']())
 
     def forward_gdas(self, x, weights, index):
-        out = self.activation[index[0].item()](x) * weights[0][index]
-        return self.final_linear(out)
+        out = self.activation[index](x) * weights[index]
+        return out
 
 
 class search_classifier(nn.Module):
@@ -68,8 +66,11 @@ class search_classifier(nn.Module):
             self.C_in = _c_in
 
         self.ops = nn.ModuleDict()
+        self.node_acti = nn.ModuleDict()
+        # 每个node之前加layerOpt
         cout = None
         for i in range(1, self.node_num + 1):
+            self.node_acti[str(i)] = LayerOp()
             for j in range(i):
                 edge = str(j) + '->' + str(i)
                 cin = self.C_in // 2 if j > 0 else self.C_in
@@ -79,12 +80,13 @@ class search_classifier(nn.Module):
                 # print(edge)
                 # print('in:{:}, out:{:}'.format(cin, cout))
         assert cout is not None
-        self.final_linear = LayerOp(cout, self.C_out)
+        self.node_acti[str(node_num + 1)] = LayerOp()
+        self.final_linear = nn.Linear(cout, self.C_out)
 
         self.edge_keys = sorted(list(self.ops.keys()))
         self.edge2index = {key: i for i, key in enumerate(self.edge_keys)}
         self.arch_parameters = nn.Parameter(torch.randn(len(self.ops), len(ops_list)))
-        self.activation_parameters = nn.Parameter(torch.randn(1, 3))
+        self.layer_opt_parameters = nn.Parameter(torch.randn(self.node_num + 1, 4))
         self.tau = 10
 
     def set_tau(self, tau):
@@ -93,7 +95,7 @@ class search_classifier(nn.Module):
     def get_tau(self):
         return self.tau
 
-    def forward_gdas(self, x, arch_weight, arch_index):
+    def forward_gdas(self, x, arch_weight, arch_index, layer_weight, layer_index):
         if self.preprocess0 is not None:
             s0 = self.preprocess0(x)
         else:
@@ -111,8 +113,17 @@ class search_classifier(nn.Module):
                 index = arch_index[self.edge2index[edge]].item()
                 # print("index: "+str(index))
                 clist.append(op.forward_gdas(h, weight, index))
-            states.append(sum(clist) / len(clist))
-        return sum(states[1:]) / (len(states) - 1)
+            clist = sum(clist) / len(clist)
+            layer_op = self.node_acti[str(i)]
+            weight = layer_weight[i - 1]
+            index = layer_index[i - 1].item()
+            states.append(layer_op.forward_gdas(clist, weight, index))
+        state = sum(states[1:]) / (len(states) - 1)
+        final_op = self.node_acti[str(self.node_num + 1)]
+        weight = layer_weight[self.node_num]
+        index = layer_index[self.node_num]
+        state = final_op.forward_gdas(state, weight, index)
+        return state
 
     def forward(self, x, arc_type='gdas'):
         def get_gumbel_prob(xins):
@@ -131,33 +142,36 @@ class search_classifier(nn.Module):
 
         x = x.reshape(x.size(0), x.size(1), 1, 1)
         arc_hardwts, arc_index = get_gumbel_prob(self.arch_parameters)
+        layer_hardwts, layer_index = get_gumbel_prob(self.layer_opt_parameters)
         if arc_type == 'gdas':
-            output = self.forward_gdas(x, arc_hardwts, arc_index)
+            output = self.forward_gdas(x, arc_hardwts, arc_index, layer_hardwts, layer_index)
         else:
             raise ValueError
         output = output.view(output.size(0), -1)
-        acti_hardwts, acti_index = get_gumbel_prob(self.activation_parameters)
-        output = self.final_linear.forward_gdas(output, acti_hardwts, acti_index)
+        output = self.final_linear(output)
         return output
 
     def show_alphas(self):
         with torch.no_grad():
             A = 'arch-parameters :\n{:}'.format(nn.functional.softmax(self.arch_parameters, dim=-1).cpu())
-            B = 'activation-parameters : \n{:}'.format(nn.functional.softmax(self.activation_parameters, dim=-1).cpu())
+            B = 'activation-parameters : \n{:}'.format(nn.functional.softmax(self.layer_opt_parameters, dim=-1).cpu())
         return A, B
 
     def get_alphas(self):
-        return [self.arch_parameters, self.activation_parameters]
+        return [self.arch_parameters, self.layer_opt_parameters]
 
     def get_weights(self):
-        x_list = list(self.ops.parameters()) + list(self.final_linear.parameters())
+        x_list = list(self.ops.parameters()) + list(self.node_acti.parameters()) + list(self.final_linear.parameters())
         return x_list
 
     def genotype(self, genotype_file):
         arch_weight = torch.softmax(self.arch_parameters, dim=-1)
-        acti_weight = torch.softmax(self.activation_parameters, dim=-1)[0].cpu().detach().numpy()
-        with open(genotype_file, 'w') as f:
-            f.write("{\n\t\"classify\": {\n\t\t\"normal\": {\n")
+        acti_weight = torch.softmax(self.layer_opt_parameters, dim=-1)
+        json_to_write = {'classify': {}}
+        json_to_write['classify']['normal'] = {}
+        json_to_write['classify']['activation'] = {}
+        for i in range(1, self.node_num + 1):
+            json_to_write['classify']['normal'][str(i)] = []
         for i in range(1, self.node_num + 1):
             in_num = []
             for j in range(i):
@@ -168,24 +182,27 @@ class search_classifier(nn.Module):
                     # if op_name == 'none': continue
                     edges.append((op_name, j, i, float(weights[k])))
                 edges = sorted(edges, key=lambda x: -x[-1])
-                selected_edges = edges[-1]
+                selected_edges = edges[0]
                 in_num.append(selected_edges)
             in_num = sorted(in_num, key=lambda x: -x[-1])
             logging.info('node {:} selectable edges:{:}'.format(i, in_num))
-            with open(genotype_file, 'a+') as f:
-                f.write("\t\t\t\"{:}\": ".format(i))
-                gen = "["
-                for j in range(self.in_num):
-                    if j + 1 > in_num.__len__():
-                        break
-                    gen += "\"{:},{:}\", ".format(in_num[j][1], in_num[j][0])
-                gen = gen[:-2]
-                if i == self.node_num:
-                    index = np.argmax(acti_weight)
-                    gen += "]\n\t\t},\n\t\t\"activation\": \"%s\"\n\t}\n}" % acti_list[index]
-                else:
-                    gen += "], \n"
-                f.write(gen)
+            for j in range(self.in_num):
+                if j >= in_num.__len__():
+                    break
+                json_to_write['classify']['normal'][str(i)].append('{:},{:}'.format(in_num[j][1], in_num[j][0]))
+
+        for i in range(1, self.node_num + 2):
+            weights = acti_weight[i - 1]
+            opt = []
+            for k, acti_name in enumerate(acti_list):
+                opt.append((acti_name, float(weights[k])))
+            opt = sorted(opt, key=lambda x: -x[-1])
+            selected_opt = opt[0]
+            logging.info('node {:} selectable active functions:{:}'.format(i, opt))
+            json_to_write['classify']['activation'][str(i)] = selected_opt[0]
+
+        with open(genotype_file, 'w') as f:
+            json.dump(json_to_write, f, indent=4)
 
 
 class train_classifier(nn.Module):
@@ -219,14 +236,19 @@ class train_classifier(nn.Module):
                 self.start_node_ops[target_node].append(edge_name)
 
         acti = classifier_arch['activation']
-        if acti == 'relu':
-            self.activation = nn.ReLU()
-        elif acti == 'sigmoid':
-            self.activation = nn.Sigmoid()
-        elif acti == 'tanh':
-            self.activation = nn.Tanh()
-        else:
-            raise ValueError
+        self.acti = nn.ModuleDict()
+        for i in range(1, self.num_node + 2):
+            acti_name = acti[str(i)]
+            if acti_name == 'relu':
+                self.acti[str(i)] = nn.ReLU()
+            elif acti_name == 'sigmoid':
+                self.acti[str(i)] = nn.Sigmoid()
+            elif acti_name == 'tanh':
+                self.acti[str(i)] = nn.Tanh()
+            elif acti_name == 'skip':
+                self.acti[str(i)] = OPS['skip']()
+            else:
+                raise ValueError
 
         assert cout is not None
         self.last_linear = nn.Linear(cout, self.num_class)
@@ -242,9 +264,10 @@ class train_classifier(nn.Module):
             for edge in edges:
                 op = self.classifier[edge]
                 c_list.append(op(states[int(edge[0])]))
-            states.append(sum(c_list) / len(c_list))
-        out = sum(states[1:])
-        out = self.activation(out)
+            c_list = sum(c_list) / len(c_list)
+            states.append(self.acti[str(i)](c_list))
+        out = sum(states[1:]) / (len(states) - 1)
+        out = self.acti[str(self.num_node + 1)](out)
         out = out.reshape(out.size(0), -1)
         out = self.last_linear(out)
         return out

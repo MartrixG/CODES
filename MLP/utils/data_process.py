@@ -164,7 +164,7 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                    shuffle=True,
                                    num_workers=workers,
                                    pin_memory=True)
-        train_loader = DataLoader(NormalDataset(name, train_data),
+        train_loader = DataLoader(NormalDataset(name, train_data),# train 改成获取全部数据
                                   batch_size=batch_size,
                                   sampler=torch.utils.data.sampler.SubsetRandomSampler(train_split),
                                   num_workers=workers,
