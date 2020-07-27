@@ -1,16 +1,10 @@
 import os
 import sys
 
-from classifier_model import search_classifier
-from pre_model import pre_model
-from train_model import Network
+from model.train_model import Network
 from utils.data_process import get_src_dataset, get_search_loader
 from utils.flop_becnmark import get_model_infos
 from utils.util import log_config, get_opt_scheduler, AverageMeter, accuracy, save
-
-curPath = os.path.abspath(os.path.dirname(__file__))
-rootPath = os.path.split(curPath)[0]
-sys.path.append(rootPath)
 
 import numpy as np
 import logging
@@ -113,7 +107,7 @@ def search(args):
     logging.info('classifier:\n{:}'.format(model.classifier))
 
     best_acc = 0
-    for epoch in range(1, 3):
+    for epoch in range(1, args.epoch):
         new_tau = args.max_tau - (args.max_tau - args.min_tau) * epoch / (args.epoch - 1)
         model.set_tau(new_tau)
         logging.info('epoch:{:} LR:{:.6f} tau:{:.6f}'.format(epoch, w_scheduler.get_lr()[0], new_tau))
@@ -131,7 +125,7 @@ def search(args):
         train_str = 'train set - epoch:' + epoch_str + ' result  Loss:'
         vla_str = ' val  set - epoch:' + epoch_str + ' result  Loss:'
         logging.info(train_str + '{:.6f}  Pre@1 : {:.5f}%  Pre@5:{:.5f}%'.format(base_loss, base_top1, base_top5))
-        logging.info(vla_str + '{:.6f}  Pre@1 : {:.5f}%  Pre@5:{:.5f}%'.format(base_loss, base_top1, base_top5))
+        logging.info(vla_str + '{:.6f}  Pre@1 : {:.5f}%  Pre@5:{:.5f}%'.format(arch_loss, arch_top1, arch_top5))
 
         if arch_top1 > best_acc:
             best_acc = arch_top1
@@ -167,6 +161,7 @@ def train(args):
         logits = model(input_feature)
         loss = criterion(target, logits)
         print(loss.data)
+
 
 def main(args):
     seed = util.prepare(args)

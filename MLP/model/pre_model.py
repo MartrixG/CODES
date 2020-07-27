@@ -1,9 +1,9 @@
 from collections import namedtuple
 
 from torch import nn, cat
-from operation.cnn_opt import FactorizedReduce, ReLUConvBN, Identity
-from operation.classify_opt import ReLUConvBN as Chanel_conv
-from operation.cnn_opt import OPS as CNN_OPS
+from model.operation.cnn_opt import FactorizedReduce, ReLUConvBN, Identity
+from model.operation.classify_opt import ReLUConvBN as Chanel_conv
+from model.operation.cnn_opt import OPS as CNN_OPS
 from utils.util import drop_path
 
 

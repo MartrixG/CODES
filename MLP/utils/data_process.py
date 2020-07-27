@@ -1,9 +1,7 @@
 from copy import deepcopy
 import random
 
-import datasets
 from torchvision import datasets
-import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
@@ -23,8 +21,11 @@ x_shape = {'cifar10': [1, 3, 32, 32],
 class SearchDataset(Dataset):
     def __init__(self, name, src_data, train_split, valid_split, check=True):
         self.name = name
-        self.feature = deepcopy(src_data[0])
-        self.label = deepcopy(src_data[1])
+        if self.name in ['cifar10', 'cifar100']:
+            self.feature = deepcopy(src_data)
+        else:
+            self.feature = deepcopy(src_data[0])
+            self.label = deepcopy(src_data[1])
         self.train_split = deepcopy(train_split)
         self.valid_split = deepcopy(valid_split)
         if check:
@@ -39,8 +40,12 @@ class SearchDataset(Dataset):
         assert 0 <= index < self.length, 'invalid index = {:}'.format(index)
         train_index = self.train_split[index]
         valid_index = random.choice(self.valid_split)
-        train_image, train_label = self.feature[train_index], self.label[train_index]
-        valid_image, valid_label = self.feature[valid_index], self.label[valid_index]
+        if self.name in ['cifar10', 'cifar100']:
+            train_image, train_label = self.feature[train_index]
+            valid_image, valid_label = self.feature[valid_index]
+        else:
+            train_image, train_label = self.feature[train_index], self.label[train_index]
+            valid_image, valid_label = self.feature[valid_index], self.label[valid_index]
         return train_image, train_label, valid_image, valid_label
 
 
@@ -164,7 +169,7 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                    shuffle=True,
                                    num_workers=workers,
                                    pin_memory=True)
-        train_loader = DataLoader(NormalDataset(name, train_data),# train 改成获取全部数据
+        train_loader = DataLoader(NormalDataset(name, train_data),  # train 改成获取全部数据
                                   batch_size=batch_size,
                                   sampler=torch.utils.data.sampler.SubsetRandomSampler(train_split),
                                   num_workers=workers,

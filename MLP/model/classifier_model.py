@@ -2,10 +2,9 @@ import json
 import logging
 
 import torch
-import numpy as np
 from torch import nn
 
-from operation.classify_opt import OPS
+from model.operation.classify_opt import OPS
 
 ops_list = ['avg_pool_3x3',
             'max_pool_3x3',

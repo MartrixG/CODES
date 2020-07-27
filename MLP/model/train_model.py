@@ -1,7 +1,7 @@
 from torch import nn
 
-from classifier_model import search_classifier, train_classifier
-from pre_model import pre_model
+from model.classifier_model import search_classifier, train_classifier
+from model.pre_model import pre_model
 
 
 class Network(nn.Module):
