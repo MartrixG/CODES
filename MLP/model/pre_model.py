@@ -3,6 +3,7 @@ from collections import namedtuple
 from torch import nn, cat
 from model.operation.cnn_opt import FactorizedReduce, ReLUConvBN, Identity
 from model.operation.classify_opt import ReLUConvBN as Chanel_conv
+from model.operation.classify_opt import Skip
 from model.operation.cnn_opt import OPS as CNN_OPS
 from utils.util import drop_path
 
@@ -32,7 +33,8 @@ class pre_model(nn.Module):
                 _c_in = (self.C_in // 4) * 4
                 self.premodel = Chanel_conv(self.C_in, _c_in)
                 self.C_in = _c_in
-            # else bug
+            else:
+                self.premodel = Skip()
         else:
             raise ValueError
 

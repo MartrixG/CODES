@@ -47,9 +47,13 @@ class Cutout(object):
         return img
 
 
-def get_data_transforms_cifar10(cutout_length=None):
-    CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
-    CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
+def get_data_transforms_cifar(name, cutout_length=None):
+    if name == 'cifar10':
+        CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
+        CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
+    else:
+        CIFAR_MEAN = [0.50705882, 0.48666667, 0.44078431]
+        CIFAR_STD = [0.26745098, 0.25647059, 0.27607843]
 
     train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
@@ -140,12 +144,12 @@ def log_config(args):
 
 
 def get_opt_scheduler(params, optm, lr, decay, scheduler_name, epoch):
-    if optm == 'Adam':
-        optimizer = optim.Adam(params, lr, weight_decay=decay)
+    if optm == 'SGD':
+        optimizer = optim.SGD(params, lr, weight_decay=decay, momentum=0.9)
     else:
         raise ValueError
     if scheduler_name == 'PolyScheduler':
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epoch)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epoch, eta_min=0.0001)
     else:
         raise ValueError
     criterion = nn.CrossEntropyLoss()

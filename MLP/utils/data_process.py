@@ -115,10 +115,17 @@ def get_src_dataset(root, name, cutout_length=None):
         train_data = (x_train_data, y_train_data)
         test_data = (x_test_data, y_test_data)
     elif name.lower() == 'cifar10':
-        train_transform, valid_transform = util.get_data_transforms_cifar10(cutout_length)
+        train_transform, valid_transform = util.get_data_transforms_cifar(name, cutout_length)
         train_data = datasets.CIFAR10(
             root=root, train=True, download=False, transform=train_transform)
         test_data = datasets.CIFAR10(
+            root=root, train=False, download=False, transform=valid_transform)
+        assert len(train_data) == 50000 and len(test_data) == 10000
+    elif name.lower() == 'cifar100':
+        train_transform, valid_transform = util.get_data_transforms_cifar(name, cutout_length)
+        train_data = datasets.CIFAR100(
+            root=root, train=True, download=False, transform=train_transform)
+        test_data = datasets.CIFAR100(
             root=root, train=False, download=False, transform=valid_transform)
         assert len(train_data) == 50000 and len(test_data) == 10000
     else:
@@ -187,9 +194,13 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                  num_workers=workers,
                                  pin_memory=True
                                  )
-    elif name.lower() == 'cifar10':
+    elif name.lower() in ['cifar10', 'cifar100']:
         assert batch_size is not None
-        cifar_split = load_config('{:}cifar10-split.txt'.format(config_root))
+        if name.lower() == 'cifar10':
+            config_root += 'cifar10-split.txt'
+        else:
+            config_root += 'cifar100-split.txt'
+        cifar_split = load_config(config_root)
         train_split, valid_split = cifar_split.train, cifar_split.valid
         valid_data = deepcopy(train_data)
         valid_data.transform = deepcopy(train_data.transform)
@@ -217,8 +228,6 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                  shuffle=False,
                                  num_workers=workers,
                                  pin_memory=True)
-    elif name.lower() == 'cifar100':
-        raise ValueError
     else:
         raise ValueError
     return search_loader, train_loader, valid_loader, test_loader

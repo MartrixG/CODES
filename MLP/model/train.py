@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from model.train_model import Network
 from utils.data_process import get_src_dataset, get_search_loader
@@ -32,21 +33,21 @@ def search_train(search_loader, model, criterion, w_optimizer, a_optimizer, epoc
         w_optimizer.zero_grad()
         if model.name in ['cifar10', 'cifar100']:
             feature, logits_aux = model(base_input)
-            loss = criterion(feature, base_target)
+            w_loss = criterion(feature, base_target)
             loss_aux = criterion(logits_aux, base_target)
-            loss += model.pre_model.auxiliary_weight * loss_aux
+            w_loss += model.pre_model.auxiliary_weight * loss_aux
         elif model.name in ['uji', 'hapt']:
             feature = model(base_input)
-            loss = criterion(feature, base_target)
+            w_loss = criterion(feature, base_target)
         else:
             raise ValueError
-        loss.backward()
+        w_loss.backward()
         nn.utils.clip_grad_norm(model.get_weights(), grad_clip)
         w_optimizer.step()
         pre1, pre5 = accuracy(feature.data, base_target.data, top_k=(1, 5))
         base_top1.update(pre1.item(), batch)
         base_top5.update(pre5.item(), batch)
-        base_loss.update(loss.item(), batch)
+        base_loss.update(w_loss.item(), batch)
 
         arch_input = arch_input.cuda()
         arch_target = arch_target.cuda()
@@ -54,20 +55,20 @@ def search_train(search_loader, model, criterion, w_optimizer, a_optimizer, epoc
         a_optimizer.zero_grad()
         if model.name in ['cifar10', 'cifar100']:
             feature, logits_aux = model(arch_input)
-            loss = criterion(feature, arch_target)
+            a_loss = criterion(feature, arch_target)
             loss_aux = criterion(logits_aux, arch_target)
-            loss += model.pre_model.auxiliary_weight * loss_aux
+            a_loss += model.pre_model.auxiliary_weight * loss_aux
         elif model.name in ['uji', 'hapt']:
             feature = model(arch_input)
-            loss = criterion(feature, arch_target)
+            a_loss = criterion(feature, arch_target)
         else:
             raise ValueError
-        loss.backward()
+        a_loss.backward()
         a_optimizer.step()
         pre1, pre5 = accuracy(feature.data, arch_target.data, top_k=(1, 5))
         arch_top1.update(pre1.item(), batch)
         arch_top5.update(pre5.item(), batch)
-        arch_loss.update(loss.item(), batch)
+        arch_loss.update(a_loss.item(), batch)
 
         if step % print_freq == 0 or step + 1 == len(search_loader):
             str1 = 'search - epoch:' + epoch_str + ' batch:[' + '{:3d}/{:}]  '.format(step, len(search_loader))
@@ -87,6 +88,7 @@ def search(args):
     logging.info('dataset loaded')
 
     model = Network(args.name, x_shape, class_num, args)
+    model = model.cuda()
     flop, param = get_model_infos(model, x_shape)
     logging.info('Params={:.2f} MB, FLOPs={:.2f} M'.format(param, flop))
 
@@ -94,7 +96,6 @@ def search(args):
         model.get_weights(), args.base_optm, args.base_lr, args.base_decay, args.base_scheduler, args.epoch)
 
     criterion = criterion.cuda()
-    model = model.cuda()
 
     if args.arch_optm == 'Adam':
         a_optimizer = optim.Adam(model.get_alphas(), args.arch_lr, weight_decay=args.arch_decay)
@@ -107,10 +108,11 @@ def search(args):
     logging.info('classifier:\n{:}'.format(model.classifier))
 
     best_acc = 0
-    for epoch in range(1, args.epoch):
+    time_str = ''
+    for epoch in range(1, args.epoch + 1):
         new_tau = args.max_tau - (args.max_tau - args.min_tau) * epoch / (args.epoch - 1)
         model.set_tau(new_tau)
-        logging.info('epoch:{:} LR:{:.6f} tau:{:.6f}'.format(epoch, w_scheduler.get_lr()[0], new_tau))
+        logging.info('epoch:{:} LR:{:.6f} tau:{:.6f} need time {:}'.format(epoch, w_scheduler.get_lr()[0], new_tau, time_str))
         if args.name in ['cifar10', 'cifar100']:
             model.set_drop_path_prob(args.drop_path_prob * epoch / args.epoch)
 
@@ -119,9 +121,13 @@ def search(args):
         # A, B = model.show_alphas()
         # logging.info(A)
         # logging.info(B)
-
+        s_time = time.time()
         base_top1, base_top5, base_loss, arch_top1, arch_top5, arch_loss = search_train(
             search_loader, model, criterion, w_optimizer, a_optimizer, epoch_str, args.print_frequency, args.grad_clip)
+        batch_time = (time.time() - s_time) * (args.epoch - epoch)
+        m, s = divmod(batch_time, 60)
+        h, m = divmod(m, 60)
+        time_str = "%d:%02d:%02d" % (h, m, s)
         train_str = 'train set - epoch:' + epoch_str + ' result  Loss:'
         vla_str = ' val  set - epoch:' + epoch_str + ' result  Loss:'
         logging.info(train_str + '{:.6f}  Pre@1 : {:.5f}%  Pre@5:{:.5f}%'.format(base_loss, base_top1, base_top5))
