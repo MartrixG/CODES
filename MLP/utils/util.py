@@ -146,6 +146,8 @@ def log_config(args):
 def get_opt_scheduler(params, optm, lr, decay, scheduler_name, epoch):
     if optm == 'SGD':
         optimizer = optim.SGD(params, lr, weight_decay=decay, momentum=0.9)
+    elif optm == 'Adam':
+        optimizer = optim.Adam(params, lr, weight_decay=decay)
     else:
         raise ValueError
     if scheduler_name == 'PolyScheduler':

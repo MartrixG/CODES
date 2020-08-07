@@ -61,8 +61,8 @@ class NormalDataset(Dataset):
 
     def __getitem__(self, index):
         assert 0 <= index < self.length, 'invalid index = {:}'.format(index)
-        chosen_feature, chosen_label = self.feature[index], self.label[index]
-        return chosen_feature, chosen_label
+        train_feature, train_label = self.feature[index], self.label[index]
+        return train_feature, train_label
 
 
 def get_src_dataset(root, name, cutout_length=None):
@@ -169,7 +169,6 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
             config_root += 'UJI-split.txt'
         dnn_split = load_config('{:}'.format(config_root))
         train_split, valid_split = dnn_split.train, dnn_split.valid
-        valid_data = deepcopy(train_data)
         search_data = SearchDataset(name, train_data, train_split, valid_split)
         search_loader = DataLoader(search_data,
                                    batch_size=batch_size,
@@ -178,22 +177,16 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                    pin_memory=True)
         train_loader = DataLoader(NormalDataset(name, train_data),  # train 改成获取全部数据
                                   batch_size=batch_size,
-                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(train_split),
+                                  shuffle=True,
                                   num_workers=workers,
-                                  pin_memory=True
-                                  )
-        valid_loader = DataLoader(NormalDataset(name, valid_data),
-                                  batch_size=batch_size,
-                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(valid_split),
-                                  num_workers=workers,
-                                  pin_memory=True
-                                  )
+                                  drop_last=True,
+                                  pin_memory=True)
         test_loader = DataLoader(NormalDataset(name, test_data),
                                  batch_size=batch_size,
-                                 shuffle=True,
+                                 shuffle=False,
                                  num_workers=workers,
-                                 pin_memory=True
-                                 )
+                                 drop_last=True,
+                                 pin_memory=True)
     elif name.lower() in ['cifar10', 'cifar100']:
         assert batch_size is not None
         if name.lower() == 'cifar10':
@@ -213,13 +206,7 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                    )
         train_loader = DataLoader(train_data,
                                   batch_size=batch_size,
-                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(train_split),
-                                  num_workers=workers,
-                                  pin_memory=True
-                                  )
-        valid_loader = DataLoader(valid_data,
-                                  batch_size=batch_size,
-                                  sampler=torch.utils.data.sampler.SubsetRandomSampler(valid_split),
+                                  shuffle=True,
                                   num_workers=workers,
                                   pin_memory=True
                                   )
@@ -230,4 +217,4 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                  pin_memory=True)
     else:
         raise ValueError
-    return search_loader, train_loader, valid_loader, test_loader
+    return search_loader, train_loader, test_loader
