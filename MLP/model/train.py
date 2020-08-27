@@ -210,7 +210,7 @@ def mode_val(valid_loader, model, criterion, epoch_str, print_freq):
         else:
             raise ValueError
 
-        pre1, pre5 = accuracy(feature.data, val_target, top_k=(1, 5))
+        pre1, pre5 = accuracy(feature.data, val_target.data, top_k=(1, 5))
         val_top1.update(pre1.item(), batch)
         val_top5.update(pre5.item(), batch)
         val_loss.update(loss.item(), batch)
@@ -291,6 +291,7 @@ def main(args):
     cudnn.benchmark = False
     cudnn.deterministic = True
     log_config(args)
+    start = time.time()
     if args.type == 'search':
         search(args)
     elif args.type == 'train':
@@ -299,3 +300,7 @@ def main(args):
         pass
     else:
         raise ValueError
+    tot_time = time.time() - start
+    m, s = divmod(tot_time, 60)
+    h, m = divmod(m, 60)
+    logging.info("total time %d:%02d:%02d" % (h, m, s))

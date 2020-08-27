@@ -211,7 +211,7 @@ def get_search_loader(train_data, test_data, name, config_root, workers, batch_s
                                   pin_memory=True
                                   )
         test_loader = DataLoader(test_data,
-                                 batch_size=batch_size,
+                                 batch_size=batch_size // 4,
                                  shuffle=False,
                                  num_workers=workers,
                                  pin_memory=True)
