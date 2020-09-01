@@ -34,6 +34,7 @@ class pre_model(nn.Module):
         self.name = name
         self.x_shape = x_shape
         self.num_class = num_class
+        # cifar10、cifar100任务使用NAS，其余根据输入维度判断是否需要整形
         if self.name in ['cifar10', 'cifar100']:
             self.auxiliary_weight = args.auxiliary_weight
             self.premodel = network_CIFAR(args.init_channels, self.num_class,
@@ -64,6 +65,7 @@ class pre_model(nn.Module):
         self.premodel.drop_path_prob = drop_path_prob
 
 
+# 接下来是CNN的NAS的模型
 class Cell(nn.Module):
 
     def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):

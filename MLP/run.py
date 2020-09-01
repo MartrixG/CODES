@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("MLP")
     parser.add_argument('--track_running_stats', default=True, type=int,
                         help='Whether use track_running_stats or not in the BN layer.')
-    parser.add_argument('--config', default='config/train-config/UCI-config.json', type=str,
+    parser.add_argument('--config', default='config/train-config/cifar-config.json', type=str,
                         help='The path of the configuration.')
     parser.add_argument('--data_path', default='data/', type=str)
     parser.add_argument('--split', default='config/split-file/', type=str)

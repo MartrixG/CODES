@@ -47,6 +47,7 @@ class Cutout(object):
         return img
 
 
+# 获取cifar10、cifar100的transform
 def get_data_transforms_cifar(name, cutout_length=None):
     if name == 'cifar10':
         CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
@@ -71,6 +72,7 @@ def get_data_transforms_cifar(name, cutout_length=None):
     return train_transform, valid_transform
 
 
+# 读取split文件，讲字符串转为数字
 def convert_param(original_list):
     assert isinstance(original_list, list), 'The type is not correct : {:}'.format(original_list)
     ctype, value = original_list[0], original_list[1]
@@ -98,6 +100,7 @@ def convert_param(original_list):
     return re
 
 
+# 从文件中读取配置信息
 def load_config(path, if_dict=False):
     path = str(path)
     with open(path, 'r') as f:
@@ -110,6 +113,7 @@ def load_config(path, if_dict=False):
     return content
 
 
+# 固定部分输出到日志
 def log_config(args):
     logging.info("mission type : {:}".format(args.type))
     logging.info('load the dataset : {:}'.format(args.name))
@@ -166,6 +170,7 @@ def load(model, model_path):
     model.load_state_dict(torch.load(model_path))
 
 
+# 准确率
 def accuracy(output, target, top_k=(1,)):
     max_k = max(top_k)
     batch_size = target.size(0)
@@ -181,6 +186,7 @@ def accuracy(output, target, top_k=(1,)):
     return res
 
 
+# 创建日志文件夹
 def create_exp_dir(path, scripts_to_save=None):
     if not os.path.exists(path):
         os.mkdir(path)
@@ -193,6 +199,7 @@ def create_exp_dir(path, scripts_to_save=None):
             shutil.copyfile(script, dst_file)
 
 
+# 准备seed
 def prepare(args):
     if args.seed == -1:
         seed = np.random.randint(0, 10000)

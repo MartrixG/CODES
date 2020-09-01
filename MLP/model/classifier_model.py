@@ -19,6 +19,7 @@ ops_list = ['avg_pool_3x3',
 acti_list = ['relu', 'sigmoid', 'tanh', 'skip']
 
 
+# 一条边混合操作
 class MixedOp(nn.Module):
 
     def __init__(self, C_in, C_out):
@@ -37,6 +38,7 @@ class MixedOp(nn.Module):
         return sum(w * op(x) for w, op in zip(weights, self._ops))
 
 
+# 选择激活函数
 class LayerOp(nn.Module):
     def __init__(self):
         super(LayerOp, self).__init__()
@@ -51,6 +53,7 @@ class LayerOp(nn.Module):
         return out
 
 
+# 搜索阶段的分类器
 class search_classifier(nn.Module):
     def __init__(self, node_num, in_num, C_in, C_out):
         super(search_classifier, self).__init__()
@@ -125,6 +128,7 @@ class search_classifier(nn.Module):
         return state
 
     def forward(self, x, arc_type='gdas'):
+        # 获取被选择的边
         def get_gumbel_prob(xins):
             while True:
                 gumbel = -torch.empty_like(xins).exponential_().log()
@@ -163,6 +167,7 @@ class search_classifier(nn.Module):
         x_list = list(self.ops.parameters()) + list(self.node_acti.parameters()) + list(self.final_linear.parameters())
         return x_list
 
+    # 将结构输出到日志中
     def genotype(self, genotype_file):
         arch_weight = torch.softmax(self.arch_parameters, dim=-1)
         acti_weight = torch.softmax(self.layer_opt_parameters, dim=-1)
@@ -204,6 +209,7 @@ class search_classifier(nn.Module):
             json.dump(json_to_write, f, indent=4)
 
 
+# 训练时使用的分类器
 class train_classifier(nn.Module):
     def __init__(self, C_in, num_class, genotype_file):
         super(train_classifier, self).__init__()
@@ -214,6 +220,7 @@ class train_classifier(nn.Module):
             classifier_arch = json.load(f)['classify']
         self._compile(classifier_arch)
 
+    # 从json文件中读取结构
     def _compile(self, classifier_arch):
         normal = classifier_arch['normal']
         cout = None

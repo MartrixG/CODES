@@ -16,6 +16,7 @@ from utils import util
 from torch.backends import cudnn
 
 
+# 搜索过程中一个epoch执行的操作
 def search_train(search_loader, model, criterion, w_optimizer, a_optimizer, epoch_str, print_freq, grad_clip):
     model.train()
     base_top1 = AverageMeter()
@@ -83,6 +84,7 @@ def search_train(search_loader, model, criterion, w_optimizer, a_optimizer, epoc
     return base_top1.avg, base_top5.avg, base_loss.avg, arch_top1.avg, arch_top5.avg, arch_loss.avg
 
 
+# 搜索
 def search(args):
     logging.info('start load dataset')
     train_data, test_data, x_shape, class_num = get_src_dataset(args.data_path, args.name)
@@ -150,6 +152,7 @@ def search(args):
     logging.info('best acc is {:.5f}%'.format(best_acc))
 
 
+# 训练过程中一个spoch执行的操作
 def model_train(train_loader, model, criterion, optimizer, epoch_str, print_freq, grad_clip):
     model.train()
     base_top1 = AverageMeter()
@@ -188,6 +191,7 @@ def model_train(train_loader, model, criterion, optimizer, epoch_str, print_freq
     return base_top1.avg, base_top5.avg, base_loss.avg
 
 
+# 训练过程中一次评估执行的操作
 def mode_val(valid_loader, model, criterion, epoch_str, print_freq):
     model.eval()
     val_top1 = AverageMeter()
@@ -224,6 +228,7 @@ def mode_val(valid_loader, model, criterion, epoch_str, print_freq):
     return val_top1.avg, val_top5.avg, val_loss.avg
 
 
+# 训练
 def train(args):
     logging.info('start load dataset')
     train_data, test_data, x_shape, class_num = get_src_dataset(args.data_path, args.name)

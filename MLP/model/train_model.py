@@ -12,7 +12,9 @@ class Network(nn.Module):
         self.num_class = num_class
         self.genotype_file = args.genotype_file
 
+        # 获取pre_model
         self.pre_model = pre_model(self.name, self.x_shape, self.num_class, args)
+        # 根据任务不同申请不同的分类器
         if args.type == 'search':
             self.classifier = search_classifier(args.num_node, args.in_num, self.pre_model.C_in, self.num_class)
         else:

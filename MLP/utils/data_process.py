@@ -18,6 +18,7 @@ x_shape = {'cifar10': [1, 3, 32, 32],
            'uji': [1, 520, 1, 1]}
 
 
+# 搜索时使用的Dataset类型
 class SearchDataset(Dataset):
     def __init__(self, name, src_data, train_split, valid_split, check=True):
         self.name = name
@@ -49,6 +50,7 @@ class SearchDataset(Dataset):
         return train_image, train_label, valid_image, valid_label
 
 
+# 训练时使用的Dataset类型
 class NormalDataset(Dataset):
     def __init__(self, name, src_data):
         self.name = name
@@ -65,23 +67,8 @@ class NormalDataset(Dataset):
         return train_feature, train_label
 
 
+# 获取原始数据
 def get_src_dataset(root, name, cutout_length=None):
-    """
-    get the source data of the given dataset
-    :param root: data root
-    :param name: dataset name(hapt, uji, cifar10, cifar100).
-    :param cutout_length: if the dataset is cnn dataset, may use cutout to enhance the dataset
-    :return: train_data:
-            if dataset is dnn dataset, return the a tuple of numpy array:(source train data, train target)
-            if dataset is cnn dataset, return a 'datasets' type in pytorch with transform of train data.
-            test_data:
-            if dataset is dnn dataset, return the a tuple of numpy array:(source test data, test target)
-            if dataset is cnn dataset, return a 'datasets' type in pytorch with transform of test data.
-            x_shape:
-            the shape of a single data of the dataset
-            class_num:
-            the number of class
-    """
     if name.lower() == 'hapt':
         x_train_file = [line.split(' ') for line in open('{:}HAPT/Train/X_train.txt'.format(root)).readlines()]
         y_train_file = [line for line in open('{:}HAPT/Train/Y_train.txt'.format(root)).readlines()]
@@ -133,35 +120,8 @@ def get_src_dataset(root, name, cutout_length=None):
     return train_data, test_data, x_shape[name.lower()], class_num[name.lower()]
 
 
+# 获取data loader
 def get_search_loader(train_data, test_data, name, config_root, workers, batch_size=None):
-    """
-    cifar10和cifar100的数据分割方式不同。
-    cifar10: search_loader 加载了完整的训练集，并且使用了SearchDataset这个datasets获取每个epoch的数据，一个用于更新模型参数，一个用于更新架构参数
-                           两个部分都使用cutout
-             train_loader 加载了完整的训练集，但是使用的是CIFAR10自带的datasets类型，并且在dataloader中使用了SubsetRandomSampler，
-                          参数是划分search_loader中使用的train_split。使用cutout
-             valid_loader 加载了完整的训练集，使用CIFAR10自带的datasets类型，并且在dataloader中使用了SubsetRandomSampler，
-                          参数是划分search_loader中使用的valid_split。没有使用cutout（使用的是test_data自带的transform）
-    cifar100：search_loader 加载了全部的训练集和测试集，并且使用了SearchDataset这个datasets获取每个epoch的数据。其中测试集的transform复制了训练集
-                            的transform为了获取cutout，因此两部分都使用了cutout
-              train_loader 加载了完整的训练集，并且使用CIFAR100自带的datasets类型。并且在dataloader中使用了SubsetRandomSampler，
-                           参数是划分search_loader中使用的train_split。使用cutout
-              valid_loader 加载了全部的测试集，并且使用CIFAR100自带的datasets类型，并且在dataloader中使用了SubsetRandomSampler，
-                           参数是另外一个划分方式（划分了原始测试集的一半）。没有使用cutout（使用的是test_data自带的transform）
-
-    :param batch_size:
-    :param train_data: source train data of dataset with type of numpy ndarray(dnn dataset)
-                       source train data of dataset with type of 'datasets' in pytorch(cnn dataset)
-    :param test_data: source test data of dataset with type of numpy ndarray(dnn dataset)
-                      source test data of dataset with type of 'datasets' in pytorch(cnn dataset)
-    :param name: dataset name in (hapt, uji, cifar10, cifar100)
-    :param config_root: the split file of the search datasets for train data
-    :param workers: multi-thread to read data
-    :return: search_loader: a dataloader using in searching architecture of MLP(need to divide train data to two parts: train_data, valid_data)
-             train_loader: a dataloader to train the final architecture which was found(use the train_split's train data)
-             valid_loader: a dataloader for checking architecture loss of MLP(use the valid_split's train data)
-             test_loader: a dataloader for testing the final architecture which was found(use the total test data)
-    """
     if name.lower() in ['hapt', 'uji']:
         if name.lower() == 'hapt':
             config_root += 'HAPT-split.txt'
