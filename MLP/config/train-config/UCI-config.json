@@ -1,5 +1,5 @@
 {
-    "name":         ["str", "hapt"],
+    "name":         ["str", "uji"],
     "type":         ["str", "train"],
     "genotype_file":["str", "config/genotype/UCI-genotype.json"],
     "epoch":        ["int", "600"],

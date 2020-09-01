@@ -11,7 +11,7 @@
     "auxiliary_weight": ["float", "0.4"],
     "batch_size":   ["int", "96"],
     "epoch":        ["int", "600"],
-    "optimizer":    ["str", "Adam"],
+    "optimizer":    ["str", "SGD"],
     "scheduler":    ["str", "PolyScheduler"],
     "lr":           ["float", "0.025"],
     "momentum":     ["float", "0.9"],
